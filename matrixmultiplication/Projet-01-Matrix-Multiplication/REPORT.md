@@ -2,7 +2,7 @@
 
 **Course:** High-Performance Computing (HPC) / Calcul Intensif (S9 - Student-Engineer Project)
 **Date:** October 2026  
-**Language & Runtime:** Python 3.11, NumPy, Numba (`@njit`, `prange`), OpenMP, mpi4py
+**Language & Runtime:** Python 3.12, NumPy, Numba (`@njit`, `prange`), OpenMP, mpi4py
 **Project Scope:** Serial baseline, Version 1 shared-memory threads, and local MPI on one machine; no VM, Docker, or multi-node deployment.
 
 ---
@@ -20,7 +20,7 @@ We implement and evaluate:
 2. **Version 1 (Shared-Memory Threads):** OpenMP-style row-parallel matrix multiplication, with a cache-blocked variant.
 3. **Local MPI:** Row-block decomposition across MPI ranks launched on the same host. Rank 0 broadcasts $B$, scatters rows of $A$, gathers the output, and verifies the result. No multi-node execution is part of this project.
 
-Threaded and MPI results are numerically verified against NumPy BLAS (`A @ B`) using `np.allclose(atol=1e-8, rtol=1e-5)`. The checked-in benchmark dataset reports serial and threaded measurements; local MPI can be run to measure the current machine, but no MPI performance results are claimed here.
+Threaded and MPI results are numerically verified against NumPy BLAS (`A @ B`) using `np.allclose(atol=1e-8, rtol=1e-5)`. The checked-in benchmark dataset reports serial, threaded, and local MPI measurements (`data/results_serial_threads.csv`, `data/results_mpi_local.csv`, `data/pingpong_local.csv`); no multi-node performance results are claimed here.
 
 ---
 
@@ -245,7 +245,7 @@ mpiexec -n 2 python src/pingpong.py --output-csv data/pingpong_local.csv
 
 ## 6. Conclusion & Deliverables
 
-The project contains serial, shared-memory threaded, and local MPI implementations. The checked-in performance analysis covers the serial and threaded kernels; the local MPI implementation demonstrates row-block distribution, collective communication, and correctness verification without introducing VM, Docker, or multi-node deployment.
+The project contains serial, shared-memory threaded, and local MPI implementations. The checked-in performance analysis covers the serial, threaded, and local MPI kernels (Sections 3.1–3.3); the local MPI implementation demonstrates row-block distribution, collective communication, and correctness verification without introducing VM, Docker, or multi-node deployment.
 
 ### Deliverables:
 - **Source Code:** `src/version1_threads.py`, `src/baseline_serial.py`, `src/mpi_matmul.py`, `src/pingpong.py`, `src/common.py`, `src/verify_all.py`, `src/benchmark_runner.py`, `src/benchmark_mpi.py`, `src/plot_results.py`.

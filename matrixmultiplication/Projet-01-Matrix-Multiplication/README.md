@@ -1,6 +1,6 @@
 # Parallel Matrix Multiplication in Python: Threads and Local MPI
 
-[![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![Numba](https://img.shields.io/badge/Accelerated-Numba%20%28OpenMP%29-blueviolet.svg)](https://numba.pydata.org/)
 [![MPI](https://img.shields.io/badge/MPI-Local%20mpi4py-orange.svg)](https://mpi4py.readthedocs.io/)
 [![Tests](https://img.shields.io/badge/Tests-100%25%20Passing-success.svg)](src/verify_all.py)
