@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Experiment E4: Convergence Check Interval Trade-off ($N=256, p=4, tol=10^{-4}$)}
+\label{tab:ksweep}
+\begin{tabular}{ccccc}
+\hline
+\textbf{Check Interval ($k$)} & \textbf{Total Time (s)} & \textbf{Allreduce Time (s)} & \textbf{Reduction Share} & \textbf{Stopping Step} \\
+\hline
+$k=1$ & 0.312 & 0.188 & 60.6\% & 5000 \\
+$k=10$ & 0.161 & 0.026 & 16.2\% & 5000 \\
+$k=50$ & 0.123 & 0.005 & 3.8\% & 5000 \\
+$k=200$ & 0.126 & 0.002 & 1.2\% & 5000 \\
+\hline
+\end{tabular}
+\end{table}

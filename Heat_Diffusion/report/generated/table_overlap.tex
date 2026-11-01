@@ -1,0 +1,18 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Non-Blocking Communication Overlap vs Blocking Halo Exchange (2000 steps)}
+\label{tab:overlap}
+\begin{tabular}{ccccc}
+\hline
+\textbf{Grid ($N$)} & \textbf{Ranks ($p$)} & \textbf{Blocking Sendrecv (s)} & \textbf{Non-blocking Isend (s)} & \textbf{Gain / Difference} \\
+\hline
+1024 & 2 & 2.568 & 3.464 & -34.9\% \\
+1024 & 4 & 2.554 & 3.156 & -23.5\% \\
+1024 & 8 & 2.869 & 3.089 & -7.7\% \\
+2048 & 2 & 10.121 & 11.280 & -11.4\% \\
+2048 & 4 & 10.074 & 11.264 & -11.8\% \\
+2048 & 8 & 10.637 & 11.802 & -11.0\% \\
+\hline
+\end{tabular}
+\end{table}

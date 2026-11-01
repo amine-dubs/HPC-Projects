@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Correctness Verification Against Pure NumPy Baseline (Selected 10 of 64 Total Passing Tests; all 64 tests achieved $\max |u - u_{\text{ref}}| = 0.00\times 10^0$)}
+\label{tab:correctness}
+\begin{tabular}{lcccccc}
+\hline
+\textbf{Implementation} & \textbf{$N$} & \textbf{$p$} & \textbf{Hotspot} & \textbf{Mode (Steps)} & \textbf{Max Abs Diff} & \textbf{Status} \\
+\hline
+serial (Numba) & 64 & 1 & False & fixed\_steps (500) & 0.00e+00 & \textbf{PASS} \\
+threads (Numba) & 64 & 4 & False & fixed\_steps (500) & 0.00e+00 & \textbf{PASS} \\
+mpi & 64 & 4 & False & fixed\_steps (500) & 0.00e+00 & \textbf{PASS} \\
+mpi & 64 & 4 & True & fixed\_steps (500) & 0.00e+00 & \textbf{PASS} \\
+threads (Numba) & 120 & 3 & False & fixed\_steps (500) & 0.00e+00 & \textbf{PASS} \\
+mpi & 120 & 6 & False & fixed\_steps (500) & 0.00e+00 & \textbf{PASS} \\
+mpi\_overlap & 120 & 6 & False & fixed\_steps (500) & 0.00e+00 & \textbf{PASS} \\
+mpi & 128 & 8 & False & fixed\_steps (500) & 0.00e+00 & \textbf{PASS} \\
+serial (Numba) & 64 & 1 & False & conv (5000 iters) & 0.00e+00 & \textbf{PASS} \\
+mpi & 64 & 4 & False & conv (5000 iters) & 0.00e+00 & \textbf{PASS} \\
+\hline
+\end{tabular}
+\end{table}

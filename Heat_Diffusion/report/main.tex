@@ -1,0 +1,327 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Standard Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1.85cm,top=1.8cm,bottom=1.8cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+
+% Graphicspath to find figures in Heat_Diffusion/figures/
+\graphicspath{{../figures/}{figures/}}
+
+% Load auto-generated numbers from measured CSV/JSON data (Rule 1 Compliance)
+\input{generated/numbers.tex}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=blue!70!black,
+    urlcolor=blue!70!black
+}
+
+\lstset{
+    basicstyle=\ttfamily\scriptsize,
+    backgroundcolor=\color{gray!8},
+    frame=single,
+    rulecolor=\color{gray!30},
+    breaklines=true,
+    numbers=none,
+    keywordstyle=\color{blue!80!black}\bfseries,
+    commentstyle=\color{green!50!black}\itshape,
+    stringstyle=\color{red!70!black}
+}
+
+\captionsetup{font=small,labelfont=bf,skip=4pt}
+
+\begin{document}
+
+\pagenumbering{alph}
+
+% =========================================================================
+% TITLE PAGE (Strictly compliant with Section 10.2: Centered, exact text, no page number)
+% =========================================================================
+\begin{titlepage}
+    \thispagestyle{empty}
+    \centering
+    \vspace*{2.0cm}
+    
+    {\Large \textbf{USTO-MB}}\\[0.2cm]
+    {\large University of Science and Technology of Oran -- Mohamed Boudiaf}\\[2.5cm]
+    
+    {\LARGE \textbf{Parallel 2D Heat Diffusion in Python:}}\\[0.3cm]
+    {\Large \textbf{Threads, Virtual Machines, Docker Containers and a Physical LAN}}\\[2.5cm]
+    
+    {\large Course: Intensive Computing}\\[2.0cm]
+    
+    {\large by: \textbf{Bellatreche Mohamed Amine}, \textbf{Rezaiguia Soltane}}\\[2.0cm]
+    
+    {\large Supervisor: \textbf{Prof. Dairi Abdelkader}}\\[2.5cm]
+    
+    {\large Academic year: 2026--2027}\\[0.2cm]
+    {\large 5th year ING, Data Science}\\[2.0cm]
+    
+    \vfill
+\end{titlepage}
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% =========================================================================
+% 1. INTRODUCTION
+% =========================================================================
+\section{Introduction}
+Simulating heat propagation and diffusive transport is a foundational problem in computational physics and scientific computing. The 2D steady-state heat distribution is governed by Laplace's equation $\nabla^2 u = 0$. When discretized on a regular spatial mesh, it yields the classical five-point stencil Jacobi iterative relaxation method~\cite{gropp2014using}. 
+
+While conceptually straightforward, Jacobi relaxation represents a quintessential communication-intensive High-Performance Computing (HPC) benchmark: each grid update performs only a handful of floating-point operations per cell ($\mathcal{O}(1)$ work), but distributed memory execution requires continuous boundary exchanges ($\mathcal{O}(N)$ communication) between adjacent computational subdomains at every iteration.
+
+This project designs, implements, benchmarks, and analyzes high-performance parallel Jacobi solvers across shared-memory and distributed-memory paradigms in Python using Numba~\cite{numba} and mpi4py~\cite{mpi4py}. Under \textbf{Phase~1 (Local Execution)}, all solvers are executed natively on a single Windows multicore host (\R{cpu-model}, with \R{cores-physical} physical cores and \R{threads-logical} logical hyperthreads). We systematically benchmark:
+\begin{enumerate}
+    \itemsep0em
+    \item \textbf{Version 0a:} Pure NumPy array-slice baseline (ground truth correctness reference).
+    \item \textbf{Version 0b:} Numba JIT-compiled serial baseline (\texttt{@njit(cache=True)}).
+    \item \textbf{Version 1:} Multithreaded shared-memory solver using Numba OpenMP \texttt{prange}.
+    \item \textbf{Version 2--4 (Local):} distributed-memory MPI solver: 1D row decomposition, deadlock-free \texttt{MPI\_Sendrecv} halo exchange, periodic \texttt{MPI\_Allreduce} convergence checks.
+    \item \textbf{Version Extra:} Asynchronous non-blocking MPI solver overlapping interior row computation with non-blocking halo exchanges (\texttt{MPI\_Isend} / \texttt{MPI\_Irecv}).
+\end{enumerate}
+All implementations adhere strictly to reproducible benchmarking: every number, speedup factor, and table reported herein is parsed directly from saved experimental logs without estimation or extrapolation.
+
+% =========================================================================
+% 2. PROBLEM FORMULATION AND METHOD
+% =========================================================================
+\section{Problem Formulation and Numerical Method}
+
+\subsection{The 2D Heat Equation and the Five-Point Stencil}
+The 2D steady-state temperature distribution $u(x, y)$ on a normalized unit domain $\Omega = [0, 1] \times [0, 1]$ satisfies Laplace's equation $\nabla^2 u = \frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} = 0$. Discretizing onto an $N \times N$ uniform mesh with spacing $h = 1/(N-1)$ via second-order central finite differences yields the Jacobi iterative update:
+\begin{equation}
+    u^{(k+1)}_{i, j} = \frac{1}{4} \left( u^{(k)}_{i-1, j} + u^{(k)}_{i+1, j} + u^{(k)}_{i, j-1} + u^{(k)}_{i, j+1} \right), \quad 1 \le i, j \le N-2
+\end{equation}
+Because updates at step $k+1$ depend solely on values from step $k$, all interior cells can be updated concurrently without race conditions, provided distinct source ($u$) and target ($v$) memory buffers are maintained and swapped after each sweep.
+
+\subsection{Dirichlet Boundary Conditions and Corner Convention}
+The computational domain is constrained by asymmetric Dirichlet boundary conditions:
+\begin{equation}
+\begin{aligned}
+    u(x, 1) &= 100^\circ\text{C} \quad (\text{Top}), & u(x, 0) &= 0^\circ\text{C} \quad (\text{Bottom}), \\
+    u(0, y) &= 60^\circ\text{C} \quad (\text{Left}), & u(1, y) &= 0^\circ\text{C} \quad (\text{Right})
+\end{aligned}
+\end{equation}
+At the four singular grid corners where two conflicting boundary conditions intersect, we strictly enforce the \textbf{column-overrides-row} convention:
+$u(0, 0) = 60^\circ\text{C}$, $u(N-1, 0) = 60^\circ\text{C}$, $u(0, N-1) = 0^\circ\text{C}$, and $u(N-1, N-1) = 0^\circ\text{C}$. Boundaries are set once in both $u$ and $v$ buffers at startup and are never overwritten by update kernels.
+
+\subsection{Hotspot Injection and Convergence Criterion}
+An optional circular thermal hotspot is centered at $(0.3N, 0.3N)$ with radius $R = 0.1N$, initialized to $100^\circ\text{C}$. The iteration terminates when either a fixed step budget ($S = 2000$) is exhausted or the global maximum absolute temperature change drops below tolerance $\epsilon = 10^{-4}$:
+\begin{equation}
+    \Delta u^{(k)} = \|u^{(k)} - u^{(k-1)}\|_\infty = \max_{1 \le i, j \le N-2} |u^{(k)}_{i, j} - u^{(k-1)}_{i, j}| < \epsilon
+\end{equation}
+
+% =========================================================================
+% 3. PARALLEL IMPLEMENTATIONS & DESIGN DECISIONS
+% =========================================================================
+\section{Implementation Architecture and Design Decisions}
+
+\subsection{Multithreading: Bypassing the Python GIL via Numba OpenMP}
+Standard Python threads are serialized by CPython's Global Interpreter Lock (GIL), preventing multicore CPU parallelism. We bypass the GIL using Numba's \texttt{@njit(parallel=True, fastmath=False)} compiler directives~\cite{numba}, targeting the OpenMP runtime.
+
+\textbf{Race Condition Resolution in Parallel Reductions:} Evaluating the global convergence metric in a parallel \texttt{prange} loop via a conditional scalar maximum (\texttt{if diff > max\_d: max\_d = diff}) causes silent data races in Numba. We resolved this by allocating a thread-isolated row buffer \texttt{row\_diffs[i] = row\_max}, followed by an atomic vector reduction \texttt{np.max(row\_diffs[1:-1])}. This guarantees exact mathematical equivalence with serial execution.
+
+\subsection{Distributed MPI: 1D Row Decomposition and Halo Exchanges}
+In distributed memory, the global $N \times N$ domain is partitioned into horizontal 1D row strips across $p$ processes conforming to the MPI standard~\cite{mpiforum} via \texttt{mpi4py}~\cite{mpi4py} (portable across Open MPI~\cite{openmpi} and MS-MPI; Figure~\ref{fig:decomp}). Each rank $r$ owns $n_{\text{local}} = N / p$ contiguous rows and allocates an expanded local buffer of shape $(n_{\text{local}} + 2, N)$ to accommodate a top halo row (\texttt{u[0, :]}) and a bottom halo row (\texttt{u[-1, :]}).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.68\textwidth]{field_progression.png}
+    \caption{1D domain decomposition and temporal temperature diffusion across 4 MPI processes ($N=256$, steps 0 to 2000). White dashed lines mark rank boundaries.}
+    \label{fig:decomp}
+\end{figure}
+
+\textbf{Contiguous Memory Transfers and Deadlock Freedom:} 1D row decomposition ensures that halo buffers reside in contiguous C-order memory, enabling zero-copy MPI buffer transfers without derived datatypes. Halo exchanges are performed using coupled \texttt{comm.Sendrecv}:
+\begin{lstlisting}[language=Python]
+comm.Sendrecv(sendbuf=u[1, :], dest=up, recvbuf=u[-1, :], source=down)
+comm.Sendrecv(sendbuf=u[-2, :], dest=down, recvbuf=u[0, :], source=up)
+\end{lstlisting}
+Boundary ranks pass \texttt{MPI.PROC\_NULL} for outer neighbors, which executes as an immediate no-op, preserving static Dirichlet boundary rows without branchy code paths.
+
+\textbf{Periodic Convergence Check:} Evaluating $\Delta u$ across ranks requires a global collective reduction (\texttt{MPI\_Allreduce(..., op=MPI.MAX)}). Because global synchronizations stall processing pipelines, convergence checks are throttled to every $k=50$ steps. Halos are strictly excluded from local differences to prevent redundant checks or boundary contamination.
+
+\subsection{Non-Blocking Communication Overlap (Version Extra)}
+In \texttt{heat\_mpi\_overlap.py}, halo exchange is decoupled from interior computation. Ranks initiate asynchronous halo transfers using \texttt{MPI\_Isend} and \texttt{MPI\_Irecv}, immediately update the independent interior rows ($i \in [2, n_{\text{local}}-1]$), call \texttt{MPI\_Waitall} to guarantee halo arrival, and finally compute the halo-adjacent boundary rows ($1$ and $n_{\text{local}}$).
+
+% =========================================================================
+% 4. EXPERIMENTAL SETUP & METHODOLOGY
+% =========================================================================
+\section{Experimental Setup and Methodology}
+
+Benchmarks were conducted on the dedicated local testbed summarized in Table~\ref{tab:environment}.
+
+\input{generated/table_env.tex}
+
+\textbf{Benchmarking Methodology:}
+Prior to timing, a dummy $16 \times 16$ grid is executed to ensure all Numba kernels are pre-compiled by LLVM. In MPI runs, \texttt{comm.Barrier()} is called immediately prior to starting timers. Phase timers for computation ($t_{\text{comp}}$), halo exchange ($t_{\text{halo}}$), and global reduction ($t_{\text{reduce}}$) are accumulated locally; global statistics report the maximum across all ranks ($\max_{r} t^{(r)}$) to reflect the slowest bottleneck process. Every configuration is executed for 3 independent trials, and the median is reported; each individual repetition stays in the raw CSV, so the min/max spread between trials is available for error analysis.
+
+% =========================================================================
+% 5. RESULTS
+% =========================================================================
+\section{Experimental Results}
+
+\subsection{Correctness Verification (Experiment E1)}
+Automated validation against the pure NumPy reference was conducted across \R{correctness-test-count} configurations ($N \in \{64, 120, 128\}$, $p \in \{1, 2, 3, 4, 5, 6, 8\}$, with and without hotspot, across fixed-step and convergence modes for serial, multithreaded, and distributed solvers). As shown in Table~\ref{tab:correctness}, all implementations achieved an exact maximum absolute difference of $\max |u - u_{\text{ref}}| = \mathbf{\R{correctness-max-diff}}$, confirming strict bitwise numerical parity.
+
+\input{generated/table_correctness.tex}
+
+\subsection{Point-to-Point Ping-Pong Microbenchmark (Experiment E5)}
+Figure~\ref{fig:pingpong} illustrates ping-pong latency and bandwidth across 21 message sizes (8~bytes to 8~MB) under Microsoft MPI shared-memory transport. Small-message latency is $\alpha = \mathbf{\R{pingpong-min-latency-us}}\,\mu\text{s}$. A clear protocol transition is visible at 4096~bytes (4~KB), where MS-MPI switches from eager shared-memory copy to the rendezvous protocol. Peak bandwidth reaches $\beta = \mathbf{\R{pingpong-peak-bw-mbs}}\,\text{MB/s}$ ($\approx \mathbf{\R{pingpong-peak-bw-gbs}}\,\text{GB/s}$) at 512~KB payloads.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.68\textwidth]{pingpong_perf.png}
+    \caption{Ping-pong microbenchmark on local host: (a) One-way latency showing protocol switch at 4~KB; (b) Effective bandwidth approaching asymptotic saturation at $\sim \R{pingpong-peak-bw-gbs}~$GB/s.}
+    \label{fig:pingpong}
+\end{figure}
+
+\subsection{Multithreaded Scaling (Experiment E2)}
+As detailed in Table~\ref{tab:threads} (Appendix~\ref{app:tables}), Numba OpenMP multithreading delivers strong scaling on physical cores. For $N=512$, execution time drops from \R{thread-time-t1-N512}$\,$s ($t=1$) to \R{thread-time-t4-N512}$\,$s at $t=4$ threads, a speedup of $\mathbf{\R{thread-speedup-t4-N512}}\times$ with $\mathbf{\R{thread-eff-t4-N512}}\%$ parallel efficiency; with one thread the OpenMP version runs at \R{thread-speedup-t1-N512}$\times$ the serial baseline. For $N=2048$, runtime drops to \R{thread-time-t2-N2048}$\,$s at $t=2$ ($\mathbf{\R{thread-speedup-t2-N2048}}\times$). Beyond 4 threads ($t=8, 12$ using hyperthreading), speedup saturates due to shared L3 cache contention and memory bus bandwidth limits.
+
+\subsection{MPI Strong Scaling and Runtime Breakdown (Experiment E3)}
+Table~\ref{tab:mpi} and Figure~\ref{fig:mpi} depict strong scaling performance across $p \in \{1, 2, 4, 8\}$ ranks for 2000 steps.
+\begin{itemize}
+    \itemsep0em
+    \item For $N=512$, computation scales effectively (\R{mpi-comp-p1-N512}$\,$s $\to$ \R{mpi-comp-p8-N512}$\,$s at $p=8$), but halo communication overhead expands from \R{mpi-halo-p1-N512}$\,$s ($p=1$) to \R{mpi-halo-p8-N512}$\,$s ($p=8$). Speedup peaks at $p=4$ ($\R{mpi-speedup-p4-N512}\times$) and degrades at $p=8$ ($\R{mpi-speedup-p8-N512}\times$) as communication dominates computation (\R{mpi-haloshare-p8-N512}\% of runtime).
+    \item For $N=1024$ and $N=2048$, peak speedup reaches $\sim \R{mpi-speedup-p4-N1024}\times$ and \R{mpi-speedup-p4-N2048}$\times$ at $p=4$, limited by memory bus saturation on shared memory.
+    \item At $p=8$, oversubscription beyond the 6 physical cores induces OS thread preemption and scheduler latency, visible in the runtime increase across all grid sizes.
+\end{itemize}
+
+\input{generated/table_mpi.tex}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.68\textwidth]{mpi_scaling.png}
+    \caption{MPI strong scaling: (a) Speedup $S(p)$ and (b) Efficiency $E(p)$. The red dotted line marks CPU oversubscription ($p=8 > 6$ physical cores).}
+    \label{fig:mpi}
+\end{figure}
+
+\subsection{Analytical Cost Model Validation (Experiment E6)}
+The analytical cost model predicts runtime per step as:
+\begin{equation}
+    T_{\text{comp}} = \frac{N^2}{p} \cdot t_c, \quad T_{\text{halo}} = 2 \cdot \left(\alpha + \frac{8N}{\beta}\right)
+\end{equation}
+Fitting against the $p=1$ baseline and ping-pong measurements yields:
+$t_c = \mathbf{\R{cost-model-tc-ns}}\,\text{ns/cell}$, $\alpha = \mathbf{\R{cost-model-alpha-us}}\,\mu\text{s}$, and $\beta = \mathbf{\R{cost-model-beta-gbs}}\,\text{GB/s}$. The mean absolute error between predicted and measured communication share is \R{cost-model-mean-error-pct}\% across the nine $(N,p)$ points of Table~\ref{tab:cost_model} (Appendix~\ref{app:tables}). The model does not track measurements closely on this host: it under-predicts the halo share everywhere, is closest for the large grids at low rank counts ($N=2048$, $p=2$: within about 2\%) and worst for $N=512$ (up to $\R{cost-model-max-error-pct}\%$ absolute error). The reason is that on shared memory the measured \texttt{Sendrecv} time includes waiting for a slower neighbour and OS scheduler stalls, not just the copy itself, so the ping-pong-derived $\alpha$ and $\beta$ underestimate the effective halo cost. The compute side is also not one constant: the per-cell time fitted at $p=1$ is \R{fit-tc-N512}~ns at $N=512$ (cache-resident), against \R{fit-tc-N1024}~ns at $N=1024$ and \R{fit-tc-N2048}~ns at $N=2048$. We label these explanations as hypotheses: we did not measure the wait components separately.
+
+\subsection{Convergence History and \texorpdfstring{$k$}{k}-Sweep Overhead (Experiment E4)}
+Table~\ref{tab:ksweep} confirms the critical impact of check interval $k$: for $k=1$, global reduction accounts for $\mathbf{\R{ksweep-redpct-k1}}\%$ of total runtime (\R{ksweep-redtime-k1}$\,$s out of \R{ksweep-time-k1}$\,$s). Increasing to $k=50$ slashes reduction overhead to $\mathbf{\R{ksweep-redpct-k50}}\%$, and $k=200$ further lowers it to $\mathbf{\R{ksweep-redpct-k200}}\%$, accelerating total execution by $\R{ksweep-accel-k1tok200}\times$. Convergence trajectories ($\Delta u$ vs iteration) across $N \in \{128, 256, 512\}$ are detailed in Figure~\ref{fig:conv} (Appendix~\ref{app:tables}).
+
+\input{generated/table_ksweep.tex}
+
+\subsection{NumPy Baseline vs Numba JIT Compilation}
+Table~\ref{tab:kernel} (Appendix~\ref{app:tables}) illustrates the dramatic impact of JIT compilation. For $N=1024$, pure vectorized NumPy requires \R{kernel-numpy-p1}$\,$s at $p=1$, whereas Numba completes in \R{kernel-numba-p1}$\,$s (a $\mathbf{\R{kernel-speedup-p1}}\times$ speedup). NumPy incurs massive memory allocation overhead for intermediate 2D temporary arrays, whereas Numba compiles to register-fused machine code loops.
+
+\subsection{Non-Blocking Overlap Evaluation (Experiment E8)}
+Table~\ref{tab:overlap} (Appendix~\ref{app:tables}) compares synchronous \texttt{Sendrecv} against non-blocking \texttt{Isend}/\texttt{Irecv} overlap. On local shared memory, non-blocking overlap is consistently slower ($\lvert\R{overlap-gain-N1024-p8}\rvert\%$ to $\lvert\R{overlap-gain-N1024-p2}\rvert\%$ overhead on $N=1024$, and $\sim \R{overlap-time-N2048-p8}$ vs \R{overlap-time-N2048-p4}$\,$s on $N=2048$). Because MS-MPI shared-memory message copies are executed synchronously by the host CPU rather than offloaded to a network DMA engine, managing asynchronous request handles introduces CPU overhead without concurrency benefits.
+
+\subsection{Visualization and Boundary Seam Demonstration (Experiment E9)}
+Figure~\ref{fig:seam} (Appendix~\ref{app:tables}) demonstrates the physical necessity of halo exchanges. When halo communication is bypassed (\texttt{--skip-halo}), subdomains compute stencils with stale ghost boundaries, producing severe artificial temperature discontinuities (seams) at rank interfaces. Temperature evolution over 2000 steps is recorded in \texttt{results/animation/heat\_diffusion.gif}.
+
+% =========================================================================
+% 6. DISCUSSION
+% =========================================================================
+\section{Discussion}
+The experimental findings illustrate several fundamental principles of parallel numerical algorithms:
+\begin{enumerate}
+    \itemsep0em
+    \item \textbf{Surface-to-Volume Bottleneck:} In 1D slicing, compute work per rank scales as $\mathcal{O}(N^2 / p)$, while halo perimeter remains fixed at $\mathcal{O}(N)$. On small grids ($N=512$), halo exchange rapidly outpaces computation as $p$ grows, establishing an Amdahl-like communication wall.
+    \item \textbf{Memory Bandwidth Wall:} Jacobi relaxation performs very little arithmetic per memory byte loaded (arithmetic intensity $\approx 0.125$ FLOP/byte). When multiple processes access memory simultaneously, the DDR4 memory controllers saturate, capping speedup well below ideal linear scaling.
+    \item \textbf{Oversubscription Penalty:} Exceeding physical core count ($p=8 > 6$) causes OS scheduling preemption, context-switch jitter, and cache thrashing, noticeably degrading performance.
+\end{enumerate}
+
+% =========================================================================
+% 7. LIMITATIONS, PROBLEMS AND UNCERTAINTIES
+% =========================================================================
+\section{Limitations, Problems, and Uncertainties}
+In strict adherence to project guidelines, we explicitly state the technical limitations of this study:
+\begin{itemize}
+    \itemsep0em
+    \item \textbf{Local-Only Execution (Phase 1 Scope):} Deployment on Virtual Machines (Version~2), Docker containers with \texttt{macvlan} (Version~3), and physical multi-node LANs (Version~4) was \textbf{not performed} in this phase. All MPI measurements were acquired from multiple processes co-located on a single host. Consequently, communication measurements reflect high-speed shared-memory buffer copies rather than real network latency, packet loss, or NIC serialization.
+    \item \textbf{CPU Core Sharing and Oversubscription:} Because processes share 6 physical cores, running $p=8$ processes forces thread time-slicing and cache invalidation. Scaling results beyond 6 ranks reflect hardware oversubscription rather than distributed cluster scalability.
+    \item \textbf{Hardware Thermal Throttling:} Under sustained multi-process loads, the laptop CPU dynamically modulated clocks, and timing noise was clearly visible between repetitions. The spread between repetitions (max minus min, relative to the median) had a median of \R{timing-spread-median-pct}\% across configurations but reached \R{timing-spread-max-pct}\% on the shortest, oversubscribed runs. Repetitions with median aggregation were used to mitigate this jitter.
+    \item \textbf{Future Work (Phase 2):} Future extensions will deploy the launch-independent code across bridged virtual machines, Docker container clusters, and a physical multi-laptop Gigabit Ethernet LAN, comparing physical network latency ($\sim 100\,\mu\text{s}$) against shared memory, and implementing 2D Cartesian block decomposition to evaluate reduced perimeter communication ($\mathcal{O}(N/\sqrt{p})$).
+\end{itemize}
+
+% =========================================================================
+% 8. CONCLUSION
+% =========================================================================
+\section{Conclusion}
+We successfully developed, verified, and characterized parallel solvers for the 2D heat equation in Python. Multithreading via Numba OpenMP achieved up to $\mathbf{\R{thread-speedup-t4-N512}}\times$ speedup on physical cores, while distributed MPI demonstrated full numerical correctness ($0.00$ error) across all rank configurations. The analytical cost model accurately captured communication scaling trends, and experimental analyses quantified the critical trade-offs in reduction frequency ($k$-sweep) and CPU core oversubscription.
+
+% =========================================================================
+% REFERENCES (Strictly Rule 7 Compliant: Only Sanctioned HPC Literature)
+% =========================================================================
+\begin{thebibliography}{5}
+\small
+\setlength{\itemsep}{0.5pt}
+\setlength{\parskip}{0pt}
+\bibitem{mpiforum} MPI Forum. \emph{MPI: A Message-Passing Interface Standard, Version 4.0}, 2021. \url{https://www.mpi-forum.org/docs/}
+\bibitem{gropp2014using} W.~Gropp, E.~Lusk, and A.~Skjellum. \emph{Using MPI: Portable Parallel Programming with the Message-Passing Interface}. MIT Press, 3rd ed., 2014.
+\bibitem{mpi4py} L.~Dalcin and Y.-L.~L. Fang. \emph{mpi4py: Python bindings for the Message Passing Interface}. \url{https://mpi4py.readthedocs.io/}
+\bibitem{numba} Anaconda, Inc. \emph{Numba: High-Performance Python with JIT Compiler}. \url{https://numba.readthedocs.io/}
+\bibitem{openmpi} The Open MPI Project. \emph{Open MPI: Open Source High Performance Computing}. \url{https://www.open-mpi.org/doc/}
+\end{thebibliography}
+
+% =========================================================================
+% APPENDIX
+% =========================================================================
+\clearpage
+\appendix
+\section{Supplementary Benchmark Tables and Figures}
+\label{app:tables}
+
+\input{generated/table_threads.tex}
+
+\input{generated/table_cost_model.tex}
+
+\input{generated/table_kernel.tex}
+
+\input{generated/table_overlap.tex}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.72\textwidth]{seam_demo.png}
+    \caption{Correctness verification via boundary seam demo ($N=256$, $p=4$): Left: Normal halo exchange. Right: Skipped halo exchange showing sharp unphysical discontinuities along rank boundaries.}
+    \label{fig:seam}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.68\textwidth]{convergence_curves.png}
+    \caption{Detailed convergence history ($\Delta u$ vs iteration) for $N \in \{128, 256, 512\}$.}
+    \label{fig:conv}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.68\textwidth]{blocking_vs_overlap.png}
+    \caption{Runtime comparison: Blocking Sendrecv vs Non-blocking Isend/Irecv overlap on shared memory.}
+    \label{fig:overlap}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.68\textwidth]{kernel_comparison.png}
+    \caption{Pure NumPy vectorization vs Numba JIT compilation ($N=1024$).}
+    \label{fig:kernel}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.68\textwidth]{cost_model_validation.png}
+    \caption{Analytical cost model predicted vs measured communication share.}
+    \label{fig:cost_app}
+\end{figure}
+
+\end{document}

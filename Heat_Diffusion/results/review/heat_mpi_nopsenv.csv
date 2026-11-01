@@ -1,0 +1,2 @@
+timestamp,target,version,kernel,N,p,steps,check_every,rep,t_total,t_compute_max,t_compute_mean,t_halo_max,t_halo_mean,t_reduce_max,t_reduce_mean,t_plot,iterations,final_diff,checksum,oversubscribed,threading_layer,notes
+2026-11-01T01:07:37.319463,local,mpi,numba,64,2,100,10,1,0.0026225000037811697,0.0003868000931106508,0.00036619999445974827,0.0018075998814310879,0.0017798999469960108,0.00032020005164667964,0.00031900002795737237,0.0,100,0.29300909824497623,57004.77685770768,0,none,Version 2-4 MPI blocking Sendrecv (kernel=numba)
