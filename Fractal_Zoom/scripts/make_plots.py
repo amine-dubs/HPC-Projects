@@ -50,7 +50,7 @@ def load_config():
 
 
 def plot_fig1_scaling():
-    """Figure 1: Speedup and Efficiency vs Process/Thread Count."""
+    """Figure 1: Speedup, Efficiency, and FPS vs Process/Thread Count."""
     serial_file = Path("results/serial_times.csv")
     threads_file = Path("results/threads.csv")
     mpi_file = Path("results/mpi_scaling.csv")
@@ -62,85 +62,109 @@ def plot_fig1_scaling():
     df_serial = pd.read_csv(serial_file)
     t_serial = df_serial["t_render"].median()
 
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4.2))
-    ax_speedup, ax_eff = axes
+    fig, axes = plt.subplots(1, 3, figsize=(14.0, 3.8))
+    ax_speedup, ax_eff, ax_fps = axes
 
-    # Ideal linear speedup line
-    p_max = 12
+    # Ideal lines
     p_ideal = np.array([1, 2, 4, 6, 8, 12])
     ax_speedup.plot(p_ideal, p_ideal, "k--", label="Ideal linear", alpha=0.6, zorder=1)
     ax_eff.axhline(1.0, color="k", linestyle="--", label="Ideal efficiency", alpha=0.6, zorder=1)
+
+    # Helper function to plot a curve with min-max errorbars and distinct oversubscribed points
+    def plot_series(df_strat, label, color, marker):
+        p_list = sorted(df_strat["p"].unique())
+        p_arr = np.array(p_list)
+        med_t, min_t, max_t = [], [], []
+        for p in p_list:
+            vals = df_strat[df_strat["p"] == p]["t_render"].values
+            med_t.append(np.median(vals))
+            min_t.append(np.min(vals))
+            max_t.append(np.max(vals))
+        med_t = np.array(med_t)
+        min_t = np.array(min_t)
+        max_t = np.array(max_t)
+
+        s_med = t_serial / med_t
+        s_min = t_serial / max_t
+        s_max = t_serial / min_t
+        yerr_s = [s_med - s_min, s_max - s_med]
+
+        e_med = s_med / p_arr
+        e_min = s_min / p_arr
+        e_max = s_max / p_arr
+        yerr_e = [e_med - e_min, e_max - e_med]
+
+        fps_med = 120.0 / med_t
+        fps_min = 120.0 / max_t
+        fps_max = 120.0 / min_t
+        yerr_fps = [fps_med - fps_min, fps_max - fps_med]
+
+        # Draw full curves with error bars
+        ax_speedup.errorbar(p_arr, s_med, yerr=yerr_s, fmt=f"-{marker}", color=color, label=label, capsize=2.5, alpha=0.9)
+        ax_eff.errorbar(p_arr, e_med, yerr=yerr_e, fmt=f"-{marker}", color=color, label=label, capsize=2.5, alpha=0.9)
+        ax_fps.errorbar(p_arr, fps_med, yerr=yerr_fps, fmt=f"-{marker}", color=color, label=label, capsize=2.5, alpha=0.9)
+
+        # Oversubscribed points drawn distinctly (hollow markers for p > 6)
+        mask_over = p_arr > 6
+        if np.any(mask_over):
+            ax_speedup.plot(p_arr[mask_over], s_med[mask_over], marker, color=color, markerfacecolor="white", markeredgewidth=1.8, markersize=6)
+            ax_eff.plot(p_arr[mask_over], e_med[mask_over], marker, color=color, markerfacecolor="white", markeredgewidth=1.8, markersize=6)
+            ax_fps.plot(p_arr[mask_over], fps_med[mask_over], marker, color=color, markerfacecolor="white", markeredgewidth=1.8, markersize=6)
 
     # Plot Threads
     if threads_file.is_file():
         df_th = pd.read_csv(threads_file)
         # Variant A
-        df_a = df_th[df_th["strategy"] == "threads_A"].groupby("p")["t_render"].median().reset_index()
+        df_a = df_th[df_th["strategy"] == "threads_A"]
         if not df_a.empty:
-            s_a = t_serial / df_a["t_render"]
-            e_a = s_a / df_a["p"]
-            ax_speedup.plot(df_a["p"], s_a, "-o", color=COLORS["threads_A"], label="Threads V1-A (rows)")
-            ax_eff.plot(df_a["p"], e_a, "-o", color=COLORS["threads_A"], label="Threads V1-A (rows)")
+            plot_series(df_a, "Threads V1-A (rows)", COLORS["threads_A"], "o")
 
         # Variant B (tile=20)
-        df_b = df_th[(df_th["strategy"] == "threads_B") & (df_th["tile"] == 20)].groupby("p")["t_render"].median().reset_index()
+        df_b = df_th[(df_th["strategy"] == "threads_B") & (df_th["tile"] == 20)]
         if not df_b.empty:
-            s_b = t_serial / df_b["t_render"]
-            e_b = s_b / df_b["p"]
-            ax_speedup.plot(df_b["p"], s_b, "-s", color=COLORS["threads_B"], label="Threads V1-B (tiles 20)")
-            ax_eff.plot(df_b["p"], e_b, "-s", color=COLORS["threads_B"], label="Threads V1-B (tiles 20)")
+            plot_series(df_b, "Threads V1-B (tiles 20)", COLORS["threads_B"], "s")
 
     # Plot MPI
     if mpi_file.is_file():
         df_mpi = pd.read_csv(mpi_file)
         # S1
-        df_s1 = df_mpi[df_mpi["strategy"] == "S1"].groupby("p")["t_render"].median().reset_index()
+        df_s1 = df_mpi[df_mpi["strategy"] == "S1"]
         if not df_s1.empty:
-            s_s1 = t_serial / df_s1["t_render"]
-            e_s1 = s_s1 / df_s1["p"]
-            ax_speedup.plot(df_s1["p"], s_s1, "-^", color=COLORS["S1"], label="MPI S1 (rows)")
-            ax_eff.plot(df_s1["p"], e_s1, "-^", color=COLORS["S1"], label="MPI S1 (rows)")
+            plot_series(df_s1, "MPI S1 (rows)", COLORS["S1"], "^")
 
         # S2
-        df_s2 = df_mpi[df_mpi["strategy"] == "S2"].groupby("p")["t_render"].median().reset_index()
+        df_s2 = df_mpi[df_mpi["strategy"] == "S2"]
         if not df_s2.empty:
-            s_s2 = t_serial / df_s2["t_render"]
-            # Efficiency relative to total processes p
-            e_s2 = s_s2 / df_s2["p"]
-            ax_speedup.plot(df_s2["p"], s_s2, "-D", color=COLORS["S2"], label="MPI S2 (tiles 20)")
-            ax_eff.plot(df_s2["p"], e_s2, "-D", color=COLORS["S2"], label="MPI S2 (tiles 20)")
+            plot_series(df_s2, "MPI S2 (tiles 20)", COLORS["S2"], "D")
 
         # S3 block
-        df_s3b = df_mpi[(df_mpi["strategy"] == "S3") & (df_mpi["assignment"] == "block")].groupby("p")["t_render"].median().reset_index()
+        df_s3b = df_mpi[(df_mpi["strategy"] == "S3") & (df_mpi["assignment"] == "block")]
         if not df_s3b.empty:
-            s_s3b = t_serial / df_s3b["t_render"]
-            e_s3b = s_s3b / df_s3b["p"]
-            ax_speedup.plot(df_s3b["p"], s_s3b, "-v", color=COLORS["S3_block"], label="MPI S3 (block)")
-            ax_eff.plot(df_s3b["p"], e_s3b, "-v", color=COLORS["S3_block"], label="MPI S3 (block)")
+            plot_series(df_s3b, "MPI S3 (block)", COLORS["S3_block"], "v")
 
         # S3 cyclic
-        df_s3c = df_mpi[(df_mpi["strategy"] == "S3") & (df_mpi["assignment"] == "cyclic")].groupby("p")["t_render"].median().reset_index()
+        df_s3c = df_mpi[(df_mpi["strategy"] == "S3") & (df_mpi["assignment"] == "cyclic")]
         if not df_s3c.empty:
-            s_s3c = t_serial / df_s3c["t_render"]
-            e_s3c = s_s3c / df_s3c["p"]
-            ax_speedup.plot(df_s3c["p"], s_s3c, "-p", color=COLORS["S3_cyclic"], label="MPI S3 (cyclic)")
-            ax_eff.plot(df_s3c["p"], e_s3c, "-p", color=COLORS["S3_cyclic"], label="MPI S3 (cyclic)")
+            plot_series(df_s3c, "MPI S3 (cyclic)", COLORS["S3_cyclic"], "p")
 
     # Formatting
-    for ax in [ax_speedup, ax_eff]:
+    for ax in axes:
         ax.set_xlabel("Process / Thread Count $p$")
         ax.set_xticks([1, 2, 4, 6, 8, 12])
         ax.axvline(6, color="gray", linestyle=":", label="Physical cores (6)" if ax == ax_speedup else None)
+        ax.axvspan(6, 12.5, color="gray", alpha=0.08, zorder=0)
         ax.grid(True)
 
     ax_speedup.set_ylabel("Speedup $S = T_{serial} / T_p$")
-    ax_speedup.set_title("Speedup vs. Process/Thread Count")
+    ax_speedup.set_title("Speedup vs. Count (with Min--Max)")
     ax_speedup.legend(loc="upper left")
 
     ax_eff.set_ylabel("Parallel Efficiency $E = S / p$")
-    ax_eff.set_title("Efficiency vs. Process/Thread Count")
+    ax_eff.set_title("Efficiency vs. Count")
     ax_eff.set_ylim(0, 1.15)
-    ax_eff.legend(loc="lower left")
+
+    ax_fps.set_ylabel("Throughput (Frames / s)")
+    ax_fps.set_title("Render FPS vs. Count")
 
     plt.tight_layout()
     out_path = Path("figures/fig1_scaling.png")

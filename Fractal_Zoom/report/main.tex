@@ -169,16 +169,14 @@ We measure rendering performance using the following standardized metrics:
 \label{sec:results}
 
 \subsection{Correctness Verification}
-Table~\ref{tab:correctness} reports the verification test suite from \texttt{results/correctness.csv}. All unit tests (orientation, partition coverage, tile coverage) and algorithmic runs (V1-A, V1-B, S1, S2, S3) achieved 100\% bitwise identity against V0 with zero pixel discrepancies.
-
-\input{generated/correctness.tex}
+The test suite in \texttt{tests/run\_correctness.py} checks coordinate orientation, row-block and tile partition coverage, full-frame reference validation against serial arrays, and algorithmic identity across all versions. All unit tests and parallel configurations (including live multi-process MPI executions) achieved 100\% bitwise identity against V0 with zero pixel discrepancies (detailed validation rows are documented in Table~\ref{tab:correctness}, Appendix~\ref{app:correctness}).
 
 \subsection{Scaling and Threading Comparison}
 Figure~\ref{fig:scaling} illustrates speedup and parallel efficiency as a function of process/thread count $p \in \{1, 2, 4, 8, 12\}$. Detailed numerical values across all configurations are documented in Table~\ref{tab:scaling_summary} (Appendix~\ref{app:scaling}).
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[height=4.4cm]{fig1_scaling.png}
+\includegraphics[height=3.8cm]{fig1_scaling.png}
 \caption{Parallel speedup (left) and parallel efficiency (right) vs. core count $p$. Physical core limit is 6 cores. Source: \texttt{results/mpi\_scaling.csv}, \texttt{results/threads.csv}.}
 \label{fig:scaling}
 \end{figure}
@@ -199,7 +197,7 @@ Among the distributed memory strategies, performance is dictated by load balance
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[height=4.0cm]{fig2_busy_time.png}
+\includegraphics[height=3.4cm]{fig2_busy_time.png}
 \caption{Per-rank busy time decomposition (compute vs. wait/comm) at $p=4$. S1 exhibits severe row-based imbalance; S2 balances workers but dedicates rank 0; S3 cyclic balances frame costs evenly. Source: \texttt{results/busy\_time.csv}.}
 \label{fig:busy_time}
 \end{figure}
@@ -209,12 +207,12 @@ Figure~\ref{fig:tile_size} and Table~\ref{tab:tile_size} evaluate the tile size 
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[height=3.8cm]{fig3_tile_size.png}
+\includegraphics[height=3.2cm]{fig3_tile_size.png}
 \caption{S2 Master-Worker tile size trade-off ($p=4$). Small tiles balance work but increase message traffic to the master. Source: \texttt{results/tile\_size.csv}.}
 \label{fig:tile_size}
 \end{figure}
 
-Small tiles ($10 \times 10$) provide the finest load distribution granularity but generate a massive message volume, causing the master's message receive loop to become a bottleneck. Conversely, large tiles ($80 \times 80$) reduce message count but induce tail latency because worker idle times spike when finishing large boundary tiles. The optimal trade-off on our architecture occurs at \sTwoOptimalTileSize$\times$\sTwoOptimalTileSize~pixels ($T_p = \sTwoOptimalTileTime$~s).
+Small tiles ($10 \times 10$) provide fine load granularity but flood the master with \sTwoTileTenMessages~messages, creating a communication bottleneck ($T_p = \sTwoTileTenTime$~s). Because our unified task queue spans all \totalFramesCount~frames without inter-frame barriers, $80 \times 80$ tiles provide 4800 total tasks—sufficient to balance 3 workers without tail latency—while slashing message traffic to \sTwoTileEightyMessages~messages, achieving the fastest rendering time ($T_p = \sTwoOptimalTileTime$~s).
 
 \input{generated/tile_size_summary.tex}
 
@@ -230,7 +228,7 @@ Figure~\ref{fig:cost_map} displays the spatial distribution of iterations per ti
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[height=4.0cm]{fig4_cost_map.png}
+\includegraphics[height=3.4cm]{fig4_cost_map.png}
 \caption{Spatial iteration density across zoom depths (top, log scale) and row block iteration shares for S1 ($p=4$, bottom). Source: \texttt{results/cost\_per\_tile.npz}, \texttt{results/cost\_per\_rowblock.csv}.}
 \label{fig:cost_map}
 \end{figure}
@@ -249,7 +247,7 @@ For production artifact generation (Experiment E10), all $\totalFramesCount$ fra
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.72\linewidth]{fig8_filmstrip.png}
+\includegraphics[width=0.50\linewidth]{fig8_filmstrip.png}
 \caption{Filmstrip of the 120-frame Mandelbrot zoom toward $c = \zoomCenterX + \zoomCenterY i$ rendered at $\frameWidth \times \frameHeight$. Source: \texttt{output/frames/}.}
 \label{fig:filmstrip}
 \end{figure}
@@ -262,7 +260,7 @@ For production artifact generation (Experiment E10), all $\totalFramesCount$ fra
 
 In accordance with Rule 2, this section presents an honest appraisal of limitations, encountered anomalies, and untested configurations documented in \texttt{dev\_log.md}:
 \begin{itemize}
-    \item \textbf{Single-Host Execution Boundary:} All measurements were conducted on a single laptop host (AMD Ryzen 5 5500U). Scaling beyond 6 cores reflects SMT hyperthreading rather than independent execution pipelines. Benchmarks at $p = 8$ and $p = 12$ are oversubscribed and exhibit non-linear scaling gains.
+    \item \textbf{Single-Host Execution Boundary:} All measurements were conducted on a single laptop host (AMD Ryzen 5 5500U). Scaling beyond 6 cores reflects SMT hyperthreading; benchmarks at $p \in \{8, 12\}$ are oversubscribed with non-linear scaling gains.
     \item \textbf{MPI Startup and Tag Collision:} During initial development of S2, master polling with \texttt{ANY\_TAG} caused worker terminal status dictionaries (\texttt{tag=100}) to be intercepted as tile returns, causing a runtime unpacking crash. Restricting the master receive loop to \texttt{TAG\_WORK} resolved the deadlock.
     \item \textbf{Ping-Pong Environmental Meaning:} Local ping-pong benchmarks reflect kernel memory copy bandwidth rather than network interface latency. Physical switch contention, MTU boundaries, and TCP stack latencies remain unmeasured in this phase.
     \item \textbf{Thread Pool Instrumentation:} Numba's \texttt{prange} construct provides no programmatic hook to inspect individual thread idle durations or per-thread CPU affinity. Discussion of load imbalance for V1 is therefore inferred from iteration sums rather than directly measured per-thread timestamps.
@@ -276,6 +274,8 @@ In accordance with Rule 2, this section presents an honest appraisal of limitati
 \label{sec:conclusion}
 
 This project implemented and systematically benchmarked parallel fractal rendering across thread and MPI paradigms. Our experimental data confirms that spatial and temporal iteration imbalances dominate parallel efficiency. In shared memory, shuffled tile decomposition (V1-B) mitigates spatial imbalance, outperforming static row splitting. In distributed memory, S3 with cyclic frame distribution provides the highest speedup (\mpiSThreeCyclicBestSpeedup$\times$) by eliminating communication and balancing time-varying iteration limits across ranks. For fine-grained intra-frame load balancing, S2 master-worker dynamic scheduling delivers balanced worker execution times, with optimal efficiency achieved at \sTwoOptimalTileSize$\times$\sTwoOptimalTileSize~pixel tiles. Future work will deploy these tested kernels across physical cluster nodes and containerized network overlays.
+
+\clearpage
 
 % =========================================================================
 % References
@@ -309,6 +309,12 @@ Microsoft Corporation, ``Microsoft MPI (MS-MPI) Documentation,'' \url{https://le
 Table~\ref{tab:environment} lists the detailed hardware and software configuration of the host machine.
 
 \input{generated/environment.tex}
+
+\section{Correctness Verification Test Suite}
+\label{app:correctness}
+Table~\ref{tab:correctness} lists the complete validation results across unit tests, reference frames, and parallel execution models.
+
+\input{generated/correctness.tex}
 
 \section{Detailed Scaling Summary Table}
 \label{app:scaling}

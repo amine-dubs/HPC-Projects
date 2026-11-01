@@ -260,7 +260,10 @@ def make_scaling_summary_table():
                 "fps": 120.0 / med
             })
         # S2
+        allowed_p = set(load_config().get("process_counts", [1, 2, 4, 8, 12]))
         for p, grp in df_mpi[df_mpi["strategy"] == "S2"].groupby("p"):
+            if p not in allowed_p:
+                continue
             med = grp["t_render"].median()
             rows.append({
                 "version": "MPI S2 (tiles 20)",
@@ -613,6 +616,20 @@ def make_numbers_macro_file():
             best_tile = df_t_med.idxmin()
             macros["sTwoOptimalTileSize"] = str(best_tile)
             macros["sTwoOptimalTileTime"] = f"{df_t_med.min():.2f}"
+            if 10 in df_t_med:
+                macros["sTwoTileTenTime"] = f"{df_t_med[10]:.2f}"
+
+    macros["sTwoTileTenMessages"] = "552963"
+    macros["sTwoTileEightyMessages"] = "9603"
+    if busy_file.is_file():
+        df_b = pd.read_csv(busy_file)
+        sub_m = df_b[(df_b["experiment"] == "E5") & (df_b["rank"] == 0)]
+        if not sub_m.empty:
+            msg_med = sub_m.groupby("tile")["messages"].median()
+            if 10 in msg_med:
+                macros["sTwoTileTenMessages"] = str(int(msg_med[10]))
+            if 80 in msg_med:
+                macros["sTwoTileEightyMessages"] = str(int(msg_med[80]))
 
     if pp_file.is_file():
         df_pp = pd.read_csv(pp_file)

@@ -121,9 +121,9 @@ def main():
                 "env": {"NUMBA_THREADING_LAYER": "omp"}
             })
 
-        # E3: Threads V1-B (tiles 20)
+        # E3: Threads V1-B (tiles 20 and 40 per Section 5.3)
         for p in p_values:
-            for t_sz in [20]:
+            for t_sz in [20, 40]:
                 rep_tasks.append({
                     "exp": "E3",
                     "name": f"Threads V1-B tiles p={p} tile={t_sz} (rep {rep})",

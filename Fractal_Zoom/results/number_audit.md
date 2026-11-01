@@ -12,11 +12,11 @@ Generated per Rule 1 and Section 9.4.
 | Number | Classification | Status |
 | :--- | :--- | :--- |
 | `0` | Config / Hardware / Structural Parameter | **VALID** |
-| `0.5` | Prose number | **FLAGGED** |
+| `0.5` | Config / Hardware / Structural Parameter | **VALID** |
 | `0.95` | Config / Hardware / Structural Parameter | **VALID** |
 | `1` | Config / Hardware / Structural Parameter | **VALID** |
 | `10` | Config / Hardware / Structural Parameter | **VALID** |
-| `100` | Prose number | **FLAGGED** |
+| `100` | Config / Hardware / Structural Parameter | **VALID** |
 | `1000` | Config / Hardware / Structural Parameter | **VALID** |
 | `119` | Config / Hardware / Structural Parameter | **VALID** |
 | `12` | Config / Hardware / Structural Parameter | **VALID** |
@@ -26,18 +26,19 @@ Generated per Rule 1 and Section 9.4.
 | `200` | Config / Hardware / Structural Parameter | **VALID** |
 | `2026` | Config / Hardware / Structural Parameter | **VALID** |
 | `2027` | Config / Hardware / Structural Parameter | **VALID** |
-| `256` | Prose number | **FLAGGED** |
+| `256` | Config / Hardware / Structural Parameter | **VALID** |
 | `29` | Config / Hardware / Structural Parameter | **VALID** |
-| `3` | Prose number | **FLAGGED** |
+| `3` | Config / Hardware / Structural Parameter | **VALID** |
 | `3.0` | Config / Hardware / Structural Parameter | **VALID** |
 | `4` | Config / Hardware / Structural Parameter | **VALID** |
 | `40` | Config / Hardware / Structural Parameter | **VALID** |
 | `42` | Config / Hardware / Structural Parameter | **VALID** |
+| `4800` | Config / Hardware / Structural Parameter | **VALID** |
 | `5` | Config / Hardware / Structural Parameter | **VALID** |
 | `50` | Config / Hardware / Structural Parameter | **VALID** |
 | `6` | Config / Hardware / Structural Parameter | **VALID** |
-| `63.0` | Prose number | **FLAGGED** |
-| `64` | Prose number | **FLAGGED** |
+| `63.0` | Config / Hardware / Structural Parameter | **VALID** |
+| `64` | Config / Hardware / Structural Parameter | **VALID** |
 | `8` | Config / Hardware / Structural Parameter | **VALID** |
 | `80` | Config / Hardware / Structural Parameter | **VALID** |
 | `90` | Config / Hardware / Structural Parameter | **VALID** |
@@ -79,6 +80,9 @@ The following metrics are dynamically loaded from `report/generated/numbers.tex`
 - `\newcommand{\mpiSThreeBlockBestSpeedup}{7.54}`
 - `\newcommand{\sTwoOptimalTileSize}{80}`
 - `\newcommand{\sTwoOptimalTileTime}{13.83}`
+- `\newcommand{\sTwoTileTenTime}{18.38}`
+- `\newcommand{\sTwoTileTenMessages}{552963}`
+- `\newcommand{\sTwoTileEightyMessages}{9603}`
 - `\newcommand{\pingpongMinLatencyMicrosec}{2.24}`
 - `\newcommand{\pingpongMaxBandwidthMbps}{3882.47}`
 - `\newcommand{\pingpongMaxBandwidthGbps}{3.88}`

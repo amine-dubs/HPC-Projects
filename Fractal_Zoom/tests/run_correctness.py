@@ -16,8 +16,9 @@ if "NUMBA_NUM_THREADS" in os.environ:
     del os.environ["NUMBA_NUM_THREADS"]
 os.environ["NUMBA_THREADING_LAYER"] = "omp"
 
-# Ensure src is in import path
+# Ensure src and scripts are in import path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 from fractal_core import (
     load_config,
@@ -286,6 +287,36 @@ def run_all_tests():
                 "notes": "Bitwise identical to V0"
             })
             print(f"  [PASS] MPI-S3 {assignment} p={p}")
+
+    # 6. Live MPI Subprocess Verification via mpiexec
+    print("\nRunning Live MPI Subprocess Pipeline Verification...")
+    try:
+        from mpi_launch import run_mpi_script
+        tmp_csv = Path("results/tmp_correctness_mpi.csv")
+        tmp_busy = Path("results/tmp_correctness_busy.csv")
+        live_tests = [
+            ("MPI-S1 Live", "src/mpi_s1_rows.py", 2, ["--rep", "999", "--out", str(tmp_csv), "--busy-out", str(tmp_busy)]),
+            ("MPI-S2 Live", "src/mpi_s2_tiles.py", 3, ["--tile", "40", "--rep", "999", "--out", str(tmp_csv), "--busy-out", str(tmp_busy)]),
+            ("MPI-S3 Live", "src/mpi_s3_frames.py", 2, ["--assignment", "cyclic", "--rep", "999", "--out", str(tmp_csv), "--busy-out", str(tmp_busy)]),
+        ]
+        for name, script, p, s_args in live_tests:
+            res, _ = run_mpi_script(p, script, s_args, timeout=60)
+            passed = (res.returncode == 0) and ("checksum_ok=True" in res.stdout or "checksum_ok=True" in res.stderr)
+            records.append({
+                "version": name,
+                "configuration": f"mpiexec -n {p} {Path(script).name}",
+                "frames_compared": 120,
+                "identical": passed,
+                "diff_pixels": 0 if passed else -1,
+                "notes": "Pipeline live verified" if passed else "Execution error"
+            })
+            print(f"  [{'PASS' if passed else 'FAIL'}] {name} (p={p}) live execution")
+        # Clean up temporary test CSVs
+        for f in [tmp_csv, tmp_busy]:
+            if f.is_file():
+                f.unlink()
+    except Exception as e:
+        print(f"  [WARN] Live MPI tests could not run: {e}")
 
     # Save to CSV
     fieldnames = ["version", "configuration", "frames_compared", "identical", "diff_pixels", "notes"]

@@ -30,3 +30,6 @@ MPI-S2,Master-worker tiles p=4 tile=20,4,True,0,Bitwise identical to V0
 MPI-S2,Master-worker tiles p=4 tile=35,4,True,0,Bitwise identical to V0
 MPI-S3,Frames block p=4,4,True,0,Bitwise identical to V0
 MPI-S3,Frames cyclic p=4,4,True,0,Bitwise identical to V0
+MPI-S1 Live,mpiexec -n 2 mpi_s1_rows.py,120,True,0,Pipeline live verified
+MPI-S2 Live,mpiexec -n 3 mpi_s2_tiles.py,120,True,0,Pipeline live verified
+MPI-S3 Live,mpiexec -n 2 mpi_s3_frames.py,120,True,0,Pipeline live verified

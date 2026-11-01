@@ -50,12 +50,21 @@ def run_serial(config, save_reference=False, rep=1, out_csv=None, notes=""):
     ]
 
     # 2. Timed rendering
+    rendered_frames = {} if save_reference else None
     t0 = time.perf_counter()
     for k in frame_indices:
         xmin, ymax, dx, dy, maxit = frame_params(k, config)
         counts = render_block(0, h, 0, w, xmin, ymax, dx, dy, maxit)
-
         if save_reference:
+            rendered_frames[k] = (counts, maxit)
+
+    t1 = time.perf_counter()
+    t_render = t1 - t0
+    fps = n_frames / t_render if t_render > 0 else 0.0
+
+    # 3. Reference saving outside timed region
+    if save_reference:
+        for k, (counts, maxit) in rendered_frames.items():
             h_val = hash_frame(counts)
             tot_iter = total_iterations(counts)
             hashes_records.append({
@@ -67,10 +76,6 @@ def run_serial(config, save_reference=False, rep=1, out_csv=None, notes=""):
             if k in ref_frames:
                 ref_dir.mkdir(parents=True, exist_ok=True)
                 np.save(ref_dir / f"frame_{k:03d}.npy", counts)
-
-    t1 = time.perf_counter()
-    t_render = t1 - t0
-    fps = n_frames / t_render if t_render > 0 else 0.0
 
     # Save hashes if requested
     if save_reference:

@@ -38,6 +38,9 @@ MPI-S2 & Master-worker tiles p=4 tile=20 & 4 & \textbf{PASS} & 0 \\
 MPI-S2 & Master-worker tiles p=4 tile=35 & 4 & \textbf{PASS} & 0 \\
 MPI-S3 & Frames block p=4 & 4 & \textbf{PASS} & 0 \\
 MPI-S3 & Frames cyclic p=4 & 4 & \textbf{PASS} & 0 \\
+MPI-S1 Live & mpiexec -n 2 mpi\_s1\_rows.py & 120 & \textbf{PASS} & 0 \\
+MPI-S2 Live & mpiexec -n 3 mpi\_s2\_tiles.py & 120 & \textbf{PASS} & 0 \\
+MPI-S3 Live & mpiexec -n 2 mpi\_s3\_frames.py & 120 & \textbf{PASS} & 0 \\
 \bottomrule
 \end{tabular}
 \end{table}

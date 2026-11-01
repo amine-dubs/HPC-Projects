@@ -66,3 +66,16 @@
   - Pages 8+: References and Appendices A–E.
 - Successfully compiled `report/main.pdf` using `pdflatex` twice with zero undefined references.
 - Verified cover page with `pdftotext -enc UTF-8` confirming exact title, authors, supervisor, and institution strings.
+
+## 2026-11-01 - Audit Review and Complete Fix Application
+- Comprehensive audit conducted against `instructions.md` rules and specifications (`fixes.md`).
+- Applied F-04: Ran 15 benchmark runs for Variant B Tile 40 ($p \in \{1, 2, 4, 8, 12\}$, reps 1--3). All passed checksum verification (`results/threads.csv` now complete with 45 rows).
+- Applied F-03: Filtered rogue single-repetition $p=3$ row from `results/mpi_scaling.csv` and `results/busy_time.csv`. Enforced process count filter in `scripts/make_tables.py` for Table 7.
+- Applied F-05: Redesigned Figure 1 in `scripts/make_plots.py` into a 3-panel figure (Speedup, Efficiency, FPS) with min-max error bars, hollow markers for oversubscribed core counts, and shaded SMT region ($p > 6$).
+- Applied F-06: Added live MPI pipeline verification (`run_mpi_script` on S1, S2, S3) to `tests/run_correctness.py`. Complete test suite passed (unit tests, reference frames, parallel slices, and live MPI runs).
+- Applied F-07: In `src/serial.py`, moved SHA-256 computation and `.npy` disk writes outside timed section.
+- Applied F-09: Created `figures/README.md` providing an explicit mapping of disk files to PDF report figure numbers.
+- Applied F-11: Whitelisted algorithmic parameters and dynamic macros in `scripts/audit_numbers.py`. Audit confirmed 0 flagged numbers, 0 buzzwords, and 0 placeholders.
+- Applied F-02: Harmonized narrative on S2 optimal tile size between `report/main.tex` and `notes.md` line 103 ($80 \times 80$ tile is fastest at 13.80 s due to balancing 3 workers without master message flooding).
+- Applied F-01: Re-balanced `report/main.tex` layout. Moved 34-row Table 2 to Appendix B, adjusted figure dimensions and bullet spacing, pulling the Conclusion cleanly onto Page 7 (page numbered 6). Verified with `pdftotext` that the 6-section body fits strictly on pages 2--7 (exactly 6 pages), followed by References on Page 8 (numbered 7) and Appendices on Pages 9--12.
+- Compiled `report/main.pdf` cleanly with two passes of `pdflatex` with 0 errors and 0 undefined references.

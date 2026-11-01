@@ -100,7 +100,7 @@
 ## 7. Results Summary by Figure
 - **Figure 1 (Scaling & Efficiency):** Shows that V1-B (shuffled tiles) scales better than V1-A (rows). In MPI, S3-cyclic achieves the highest speedup. Beyond $p = 6$, hyperthreading yields diminishing returns.
 - **Figure 2 (Busy Time Breakdown at $p=4$):** Exposes severe imbalance in S1 (middle ranks compute 2–3$\times$ longer). S2 shows balanced workers but an idle master. S3-cyclic exhibits near-perfect compute balance.
-- **Figure 3 (Tile Size Study for S2):** Demonstrates the communication-granularity trade-off. $10 \times 10$ tiles saturate the master with messages; $80 \times 80$ tiles cause worker idle times. Optimal tile size is $20 \times 20$ or $40 \times 40$.
+- **Figure 3 (Tile Size Study for S2):** Demonstrates the communication-granularity trade-off. $10 \times 10$ tiles saturate the master with over 550,000 messages ($18.38$~s). Because our unified task queue covers all 120 frames without inter-frame barriers, $80 \times 80$ tiles provide 4,800 tasks—sufficient to balance 3 workers without tail latency—while minimizing message traffic to 9,603 messages, achieving the optimal execution time of $13.80$~s (with $40 \times 40$ close at $14.13$~s).
 - **Figure 4 (Cost Heatmaps & S1 Rows):** Visualizes the concentration of work along boundary filaments and cardioid interior. S1 row blocks 1 and 2 absorb over 70% of total iterations.
 - **Figure 5 (Busy Time vs. Iterations):** Scatter points align tightly on $y = x$, proving that iteration count accurately dictates compute time.
 - **Figure 6 (S3 Block vs. Cyclic):** Compares S3 block (rank 3 computes expensive deep frames, rank 0 finishes early) against S3 cyclic (uniform compute across all ranks).
