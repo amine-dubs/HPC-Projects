@@ -1,0 +1,57 @@
+{
+  "V0": {
+    "name": "Serial baseline (V0)",
+    "execution_model": "Serial",
+    "deployment": "Local machine",
+    "technology": "Python + Numba @njit",
+    "status": "EXECUTED",
+    "evidence": "results/serial_times.csv, results/serial_hashes.csv",
+    "notes": "Executed locally on AMD Ryzen 5 5500U."
+  },
+  "V1": {
+    "name": "Shared-memory threads (V1)",
+    "execution_model": "Threads (Variant A rows, Variant B tiles)",
+    "deployment": "Local machine",
+    "technology": "Numba prange + OpenMP",
+    "status": "EXECUTED",
+    "evidence": "results/threads.csv",
+    "notes": "Executed locally across thread counts 1, 2, 4, 8, 12."
+  },
+  "MPI_Local": {
+    "name": "MPI Local (S1, S2, S3)",
+    "execution_model": "Distributed memory via local ranks",
+    "deployment": "Local machine",
+    "technology": "mpi4py + Microsoft MPI 10.1",
+    "status": "EXECUTED",
+    "evidence": "results/mpi_scaling.csv, results/busy_time.csv, results/tile_size.csv",
+    "notes": "Executed locally across process counts 1, 2, 4, 8, 12."
+  },
+  "V2": {
+    "name": "Virtual Machines (V2)",
+    "execution_model": "MPI over bridged virtual network",
+    "deployment": "Bridged VMs",
+    "technology": "mpi4py + Open MPI / MPICH",
+    "status": "DEFERRED",
+    "evidence": null,
+    "notes": "Deferred to next phase per project scope."
+  },
+  "V3": {
+    "name": "Docker Containers (V3)",
+    "execution_model": "MPI over container network / macvlan",
+    "deployment": "Docker containers",
+    "technology": "Docker, macvlan / bridge, mpi4py",
+    "status": "DEFERRED",
+    "evidence": null,
+    "notes": "Deferred to next phase per project scope."
+  },
+  "V4": {
+    "name": "Physical LAN Cluster (V4)",
+    "execution_model": "MPI over physical Ethernet switch",
+    "deployment": "Physical lab nodes",
+    "technology": "Physical LAN, mpi4py",
+    "status": "DEFERRED",
+    "evidence": null,
+    "notes": "Deferred to next phase per project scope."
+  }
+}
+

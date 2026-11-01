@@ -1,0 +1,19 @@
+{
+  "width": 640,
+  "height": 360,
+  "total_frames": 120,
+  "zoom_center": [-0.7436, 0.1318],
+  "shrink_factor": 0.95,
+  "initial_width": 3.0,
+  "maxit_start": 200,
+  "maxit_end": 1000,
+  "escape_radius_sq": 4.0,
+  "tile_sizes": [10, 20, 40, 80],
+  "process_counts": [1, 2, 4, 8, 12],
+  "repetitions_default": 3,
+  "repetitions_serial": 5,
+  "shuffle_seed": 42,
+  "fps": 24,
+  "bench_frame_indices": null
+}
+

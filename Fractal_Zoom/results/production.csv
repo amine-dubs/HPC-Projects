@@ -1,0 +1,2 @@
+experiment,target,version,strategy,assignment,p,workers,tile,frames,width,height,rep,t_render,t_comm,t_io,fps,checksum_ok,oversubscribed,threading_layer,launcher_cmd,timestamp,notes
+E10,local,V1,threads_B,shuffled_tiles,6,6,20,120,640,360,1,7.696238,,10.622196,15.5920,True,False,omp,python src/make_movie.py -p 6 --tile 20,2026-11-01T20:06:39.010028,

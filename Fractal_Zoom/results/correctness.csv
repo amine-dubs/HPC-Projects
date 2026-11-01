@@ -1,0 +1,32 @@
+version,configuration,frames_compared,identical,diff_pixels,notes
+Core,Orientation test (Im=0 in lower half),1,True,0,Passed
+Core,row_block partition coverage (p in 1..12),0,True,0,Passed
+Core,tile_list coverage (including edge non-divisors),0,True,0,Passed
+V0-Reference,Saved .npy validation frame 0,1,True,0,Bitwise match
+V0-Reference,Saved .npy validation frame 40,1,True,0,Bitwise match
+V0-Reference,Saved .npy validation frame 80,1,True,0,Bitwise match
+V0-Reference,Saved .npy validation frame 119,1,True,0,Bitwise match
+V1-A,prange rows p=2,4,True,0,Bitwise identical to V0
+V1-A,prange rows p=3,4,True,0,Bitwise identical to V0
+V1-A,prange rows p=4,4,True,0,Bitwise identical to V0
+V1-B,prange tiles p=2 tile=20,4,True,0,Bitwise identical to V0
+V1-B,prange tiles p=2 tile=35,4,True,0,Bitwise identical to V0
+V1-B,prange tiles p=3 tile=20,4,True,0,Bitwise identical to V0
+V1-B,prange tiles p=3 tile=35,4,True,0,Bitwise identical to V0
+V1-B,prange tiles p=4 tile=20,4,True,0,Bitwise identical to V0
+V1-B,prange tiles p=4 tile=35,4,True,0,Bitwise identical to V0
+MPI-S1,Static rows p=2,4,True,0,Bitwise identical to V0
+MPI-S2,Master-worker tiles p=2 tile=20,4,True,0,Bitwise identical to V0
+MPI-S2,Master-worker tiles p=2 tile=35,4,True,0,Bitwise identical to V0
+MPI-S3,Frames block p=2,4,True,0,Bitwise identical to V0
+MPI-S3,Frames cyclic p=2,4,True,0,Bitwise identical to V0
+MPI-S1,Static rows p=3,4,True,0,Bitwise identical to V0
+MPI-S2,Master-worker tiles p=3 tile=20,4,True,0,Bitwise identical to V0
+MPI-S2,Master-worker tiles p=3 tile=35,4,True,0,Bitwise identical to V0
+MPI-S3,Frames block p=3,4,True,0,Bitwise identical to V0
+MPI-S3,Frames cyclic p=3,4,True,0,Bitwise identical to V0
+MPI-S1,Static rows p=4,4,True,0,Bitwise identical to V0
+MPI-S2,Master-worker tiles p=4 tile=20,4,True,0,Bitwise identical to V0
+MPI-S2,Master-worker tiles p=4 tile=35,4,True,0,Bitwise identical to V0
+MPI-S3,Frames block p=4,4,True,0,Bitwise identical to V0
+MPI-S3,Frames cyclic p=4,4,True,0,Bitwise identical to V0

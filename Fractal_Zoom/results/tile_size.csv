@@ -1,0 +1,13 @@
+experiment,target,version,strategy,assignment,p,workers,tile,frames,width,height,rep,t_render,t_comm,t_io,fps,checksum_ok,oversubscribed,threading_layer,launcher_cmd,timestamp,notes
+E5,local,MPI,S2,master_worker,4,3,10,120,640,360,1,18.834461,17.119474,,6.3713,True,False,none,mpiexec -n 4 python src/mpi_s2_tiles.py --tile 10,2026-11-01T19:34:08.394994,
+E5,local,MPI,S2,master_worker,4,3,40,120,640,360,1,14.249832,14.020101,,8.4212,True,False,none,mpiexec -n 4 python src/mpi_s2_tiles.py --tile 40,2026-11-01T19:36:45.418142,
+E5,local,MPI,S2,master_worker,4,3,80,120,640,360,1,13.833822,13.714880,,8.6744,True,False,none,mpiexec -n 4 python src/mpi_s2_tiles.py --tile 80,2026-11-01T19:37:02.028884,
+E5,local,MPI,S2,master_worker,4,3,20,120,640,360,1,15.337089,14.770911,,7.8242,True,False,none,mpiexec -n 4 python src/mpi_s2_tiles.py --tile 20,2026-11-01T19:41:50.094726,
+E5,local,MPI,S2,master_worker,4,3,10,120,640,360,2,18.372078,16.787297,,6.5317,True,False,none,mpiexec -n 4 python src/mpi_s2_tiles.py --tile 10,2026-11-01T19:49:54.703041,
+E5,local,MPI,S2,master_worker,4,3,20,120,640,360,2,15.423017,14.857725,,7.7806,True,False,none,mpiexec -n 4 python src/mpi_s2_tiles.py --tile 20,2026-11-01T19:50:40.683566,
+E5,local,MPI,S2,master_worker,4,3,80,120,640,360,2,13.889063,13.761681,,8.6399,True,False,none,mpiexec -n 4 python src/mpi_s2_tiles.py --tile 80,2026-11-01T19:51:40.622226,
+E5,local,MPI,S2,master_worker,4,3,40,120,640,360,2,12.318547,12.118475,,9.7414,True,False,none,mpiexec -n 4 python src/mpi_s2_tiles.py --tile 40,2026-11-01T19:53:19.526806,
+E5,local,MPI,S2,master_worker,4,3,40,120,640,360,3,14.133081,13.918054,,8.4907,True,False,none,mpiexec -n 4 python src/mpi_s2_tiles.py --tile 40,2026-11-01T19:55:29.767277,
+E5,local,MPI,S2,master_worker,4,3,10,120,640,360,3,18.383630,16.750708,,6.5275,True,False,none,mpiexec -n 4 python src/mpi_s2_tiles.py --tile 10,2026-11-01T19:56:56.194880,
+E5,local,MPI,S2,master_worker,4,3,80,120,640,360,3,13.803737,13.685273,,8.6933,True,False,none,mpiexec -n 4 python src/mpi_s2_tiles.py --tile 80,2026-11-01T19:57:22.639929,
+E5,local,MPI,S2,master_worker,4,3,20,120,640,360,3,15.178761,14.629833,,7.9058,True,False,none,mpiexec -n 4 python src/mpi_s2_tiles.py --tile 20,2026-11-01T20:02:35.844267,

@@ -1,0 +1,6 @@
+experiment,target,version,strategy,assignment,p,workers,tile,frames,width,height,rep,t_render,t_comm,t_io,fps,checksum_ok,oversubscribed,threading_layer,launcher_cmd,timestamp,notes
+E2,local,V0,serial,none,1,1,,120,640,360,1,36.483432,,,3.2892,True,False,none,serial,2026-11-01T19:21:28.866387,
+E2,local,V0,serial,none,1,1,,120,640,360,2,40.432865,,,2.9679,True,False,none,serial,2026-11-01T19:31:32.835781,
+E2,local,V0,serial,none,1,1,,120,640,360,3,40.494881,,,2.9633,True,False,none,serial,2026-11-01T19:32:15.701788,
+E2,local,V0,serial,none,1,1,,120,640,360,4,40.406132,,,2.9698,True,False,none,serial,2026-11-01T19:32:58.405305,
+E2,local,V0,serial,none,1,1,,120,640,360,5,39.594938,,,3.0307,True,False,none,serial,2026-11-01T19:33:40.366416,

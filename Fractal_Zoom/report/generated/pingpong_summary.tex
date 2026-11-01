@@ -1,0 +1,23 @@
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\caption{MPI Ping-Pong latency and bandwidth on local shared memory. (Source: \texttt{results/pingpong.csv})}
+\label{tab:pingpong}
+\begin{tabular}{rcccc}
+\toprule
+\textbf{Message Size} & \textbf{Repetitions} & \textbf{Round-Trip} ($\mu$s) & \textbf{One-Way Latency} ($\mu$s) & \textbf{Bandwidth} (MB/s) \\
+\midrule
+1~B & 500 & 5.57 & 2.79 & 0.34 \\
+8~B & 500 & 5.09 & 2.55 & 3.00 \\
+64~B & 500 & 4.49 & 2.24 & 27.20 \\
+512~B & 200 & 6.83 & 3.41 & 143.02 \\
+4~KiB & 200 & 18.47 & 9.23 & 423.06 \\
+32~KiB & 50 & 31.50 & 15.75 & 1984.00 \\
+256~KiB & 50 & 149.08 & 74.54 & 3353.95 \\
+1~MiB & 20 & 518.61 & 259.30 & 3856.46 \\
+2~MiB & 20 & 1044.23 & 522.12 & 3830.57 \\
+8~MiB & 10 & 4121.09 & 2060.55 & 3882.47 \\
+\bottomrule
+\end{tabular}
+\end{table}

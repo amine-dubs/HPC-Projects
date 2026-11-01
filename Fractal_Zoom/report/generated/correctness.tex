@@ -1,0 +1,43 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Validation test suite results. (Source: \texttt{results/correctness.csv})}
+\label{tab:correctness}
+\begin{tabular}{llccc}
+\toprule
+\textbf{Module} & \textbf{Test Case / Configuration} & \textbf{Frames} & \textbf{Identical} & \textbf{Pixel Diffs} \\
+\midrule
+Core & Orientation test (Im=0 in lower half) & 1 & \textbf{PASS} & 0 \\
+Core & row\_block partition coverage (p in 1..12) & 0 & \textbf{PASS} & 0 \\
+Core & tile\_list coverage (including edge non-divisors) & 0 & \textbf{PASS} & 0 \\
+V0-Reference & Saved .npy validation frame 0 & 1 & \textbf{PASS} & 0 \\
+V0-Reference & Saved .npy validation frame 40 & 1 & \textbf{PASS} & 0 \\
+V0-Reference & Saved .npy validation frame 80 & 1 & \textbf{PASS} & 0 \\
+V0-Reference & Saved .npy validation frame 119 & 1 & \textbf{PASS} & 0 \\
+V1-A & prange rows p=2 & 4 & \textbf{PASS} & 0 \\
+V1-A & prange rows p=3 & 4 & \textbf{PASS} & 0 \\
+V1-A & prange rows p=4 & 4 & \textbf{PASS} & 0 \\
+V1-B & prange tiles p=2 tile=20 & 4 & \textbf{PASS} & 0 \\
+V1-B & prange tiles p=2 tile=35 & 4 & \textbf{PASS} & 0 \\
+V1-B & prange tiles p=3 tile=20 & 4 & \textbf{PASS} & 0 \\
+V1-B & prange tiles p=3 tile=35 & 4 & \textbf{PASS} & 0 \\
+V1-B & prange tiles p=4 tile=20 & 4 & \textbf{PASS} & 0 \\
+V1-B & prange tiles p=4 tile=35 & 4 & \textbf{PASS} & 0 \\
+MPI-S1 & Static rows p=2 & 4 & \textbf{PASS} & 0 \\
+MPI-S2 & Master-worker tiles p=2 tile=20 & 4 & \textbf{PASS} & 0 \\
+MPI-S2 & Master-worker tiles p=2 tile=35 & 4 & \textbf{PASS} & 0 \\
+MPI-S3 & Frames block p=2 & 4 & \textbf{PASS} & 0 \\
+MPI-S3 & Frames cyclic p=2 & 4 & \textbf{PASS} & 0 \\
+MPI-S1 & Static rows p=3 & 4 & \textbf{PASS} & 0 \\
+MPI-S2 & Master-worker tiles p=3 tile=20 & 4 & \textbf{PASS} & 0 \\
+MPI-S2 & Master-worker tiles p=3 tile=35 & 4 & \textbf{PASS} & 0 \\
+MPI-S3 & Frames block p=3 & 4 & \textbf{PASS} & 0 \\
+MPI-S3 & Frames cyclic p=3 & 4 & \textbf{PASS} & 0 \\
+MPI-S1 & Static rows p=4 & 4 & \textbf{PASS} & 0 \\
+MPI-S2 & Master-worker tiles p=4 tile=20 & 4 & \textbf{PASS} & 0 \\
+MPI-S2 & Master-worker tiles p=4 tile=35 & 4 & \textbf{PASS} & 0 \\
+MPI-S3 & Frames block p=4 & 4 & \textbf{PASS} & 0 \\
+MPI-S3 & Frames cyclic p=4 & 4 & \textbf{PASS} & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}

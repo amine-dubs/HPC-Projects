@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{MPI S2 tile-size sensitivity analysis at $p=4$ (1 master + 3 workers). (Source: \texttt{results/tile\_size.csv})}
+\label{tab:tile_size}
+\begin{tabular}{ccccccc}
+\toprule
+\textbf{Tile Size} & \textbf{Median} $T_{render}$ (s) & \textbf{Min--Max} (s) & \textbf{Speedup} $S$ & $E_{workers}$ & \textbf{Messages} & \textbf{FPS} \\
+\midrule
+10$\times$10 & 18.38 & 18.37--18.83 & 2.20$\times$ & 73.3\% & 552963 & 6.5 \\
+20$\times$20 & 15.34 & 15.18--15.42 & 2.63$\times$ & 87.8\% & 138243 & 7.8 \\
+40$\times$40 & 14.13 & 12.32--14.25 & 2.86$\times$ & 95.3\% & 34563 & 8.5 \\
+80$\times$80 & 13.83 & 13.80--13.89 & 2.92$\times$ & 97.4\% & 9603 & 8.7 \\
+\bottomrule
+\end{tabular}
+\end{table}

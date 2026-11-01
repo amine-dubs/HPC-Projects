@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Deployment implementation status matrix across architectures. (Source: \texttt{results/deployment\_status.json})}
+\label{tab:deployment_status}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}p{1.9cm}c>{\raggedright\arraybackslash}p{5.0cm}}
+\toprule
+\textbf{Version} & \textbf{Execution Model} & \textbf{Target} & \textbf{Status} & \textbf{Notes / Evidence} \\
+\midrule
+Serial baseline (V0) & Serial & Local machine & \textbf{EXECUTED} & Executed locally on AMD Ryzen 5 5500U. \\
+Shared-memory threads (V1) & Threads (Variant A rows, Variant B tiles) & Local machine & \textbf{EXECUTED} & Executed locally across thread counts 1, 2, 4, 8, 12. \\
+MPI Local (S1, S2, S3) & Distributed memory via local ranks & Local machine & \textbf{EXECUTED} & Executed locally across process counts 1, 2, 4, 8, 12. \\
+Virtual Machines (V2) & MPI over bridged virtual network & Bridged VMs & \textit{DEFERRED} & Deferred to next phase per project scope. \\
+Docker Containers (V3) & MPI over container network / macvlan & Docker containers & \textit{DEFERRED} & Deferred to next phase per project scope. \\
+Physical LAN Cluster (V4) & MPI over physical Ethernet switch & Physical lab nodes & \textit{DEFERRED} & Deferred to next phase per project scope. \\
+\bottomrule
+\end{tabular}
+\end{table}

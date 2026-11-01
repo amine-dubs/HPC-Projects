@@ -1,198 +1,216 @@
-# Parallel Fractal Zoom in Python
+# Parallel Fractal Zoom Movie in Python
 
-This project compares three implementations of the same Mandelbrot
-computation:
+Mini-project for the course **Intensive Computing** at USTO-MB (University of Science and Technology of Oran – Mohamed Boudiaf).  
+Authors: **Bellatreche Mohamed Amine**, **Rezaiguia Soltane**  
+Supervisor: **Prof. Dairi Abdelkader**  
+Academic Year: **2026–2027, 5th year ING, Data Science**
 
-1. the readable Python/NumPy serial reference from Milestone 1;
-2. a Numba-compiled serial kernel;
-3. a Numba kernel parallelized across independent image rows with `prange`.
+---
 
-MPI, multiprocessing, distributed execution, and zoom animation are outside
-this milestone.
+## 1. Overview
+This repository contains a high-performance Mandelbrot zoom movie engine written in Python. It investigates spatial and temporal load balancing across shared-memory threads (Numba + OpenMP) and distributed-memory message passing (MPI via `mpi4py`). Every parallel version is verified for bitwise identity against a serial baseline.
 
-## Proposal alignment and delivery roadmap
+### Folder Layout
+```
+Fractal_Zoom/
+├── README.md               # User guide and reproduction commands
+├── notes.md                # Consultation defense guide and professor Q&A
+├── instructions.md         # Course project specification
+├── dev_log.md              # Real-time development diary and troubleshooting log
+├── config.json             # Global zoom, geometry, and runtime parameters
+├── requirements.txt        # Exact pinned Python package dependencies
+├── docs/                   # Course proposal document
+├── src/
+│   ├── fractal_core.py     # Shared Numba @njit kernel and geometry helpers
+│   ├── serial.py           # V0 serial baseline renderer
+│   ├── threads.py          # V1 shared-memory parallel engine (Variants A and B)
+│   ├── mpi_s1_rows.py      # MPI Strategy 1: Static row decomposition
+│   ├── mpi_s2_tiles.py     # MPI Strategy 2: Master-worker dynamic tiles
+│   ├── mpi_s3_frames.py    # MPI Strategy 3: Embarrassingly parallel frames
+│   ├── make_movie.py       # Production movie and video assembly (E10)
+│   └── pingpong.py         # Inter-process latency and bandwidth benchmark
+├── tests/
+│   └── run_correctness.py  # Validation test suite (orientation, coverage, bitwise hashes)
+├── scripts/
+│   ├── env_info.py         # System environment discovery
+│   ├── mpi_launch.py       # Cross-platform MPI launcher wrapper
+│   ├── warmup.py           # Kernel pre-compilation script
+│   ├── compute_cost_profiles.py # E6 iteration cost analysis
+│   ├── run_benchmarks.py   # Benchmark execution harness
+│   ├── make_plots.py       # Publication-ready figure generator
+│   └── make_tables.py      # LaTeX table and macro generator
+├── results/                # Raw benchmark CSVs, logs, and reference arrays
+├── figures/                # Rendered PNG/PDF figures
+├── output/                 # Final zoom frames, zoom.gif, and zoom.mp4
+└── report/
+    ├── main.tex            # Full academic LaTeX report
+    ├── main.pdf            # Compiled report document
+    └── generated/          # Auto-generated tables and number macros
+```
 
-The proposal calls the complete project **Parallel Fractal Zoom Movie in
-Python**. This repository is being built incrementally over four weeks:
+---
 
-| Proposal deliverable | Status |
-|---|---|
-| Serial Mandelbrot reference and single-frame image | Complete |
-| Numba serial and shared-memory `prange` implementations | Complete |
-| Correctness comparison against the serial reference | Complete |
-| Thread/process scaling measurements and plots | Started by `benchmark.py`; broader runs pending |
-| MPI static-row strategy (S1) | Not started |
-| MPI master-worker tile strategy (S2) | Not started |
-| MPI whole-frame strategy (S3) | Not started |
-| VM deployment and documented bridged-LAN setup | Not started |
-| Docker deployment and Compose/network scripts | Not started |
-| Physical-LAN deployment and connectivity checks | Not started |
-| Zoom frames and final GIF/MP4 movie | Not started |
-| Raw CSV data, speedup/efficiency/load-balance plots | Not started |
-| Four-to-six-page report and live demonstration | Not started |
+## 2. Requirements & Environment Setup
 
-The proposal's suggested final parameters are 640 x 360 frames, about 120
-frames, a zoom centre near `-0.7436 + 0.1318i`, a per-frame zoom factor near
-`0.95`, and an iteration limit that grows from roughly 200 toward 1000. These
-are future movie settings, not changes to the current single-frame baseline.
-The current milestone deliberately does not add MPI, Docker, VM, LAN, or
-animation code.
+### System Prerequisites
+- **Python:** 3.12 (or any Numba-supported version: 3.10–3.12).
+- **MPI Runtime:** Microsoft MPI (MS-MPI v10+) on Windows, or Open MPI (`libopenmpi-dev`) on Linux/WSL2.
+- **LaTeX Compiler:** MiKTeX (Windows) or TeX Live (Linux) providing `pdflatex`.
+- **FFmpeg:** Handled automatically via `imageio-ffmpeg`.
 
-The next implementation step is to extend the shared-memory experiment with
-the proposal's alternative small-tile scheduling variant, then record
-repeatable scaling data before beginning local MPI strategy S1. Deployment
-work should begin only after local MPI correctness is established.
-
-## Setup
-
-The project uses Python 3, NumPy, Numba, and Matplotlib. Numba accelerates the
-two experimental kernels but does not replace the original reference.
-
-From the project directory, create or activate a virtual environment and
-install the required runtime packages:
-
+### Windows Setup
 ```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install numpy matplotlib numba
+# 1. Install Microsoft MPI Runtime and SDK from Microsoft
+# (Installs to C:\Program Files\Microsoft MPI\Bin)
+
+# 2. Create and activate virtual environment
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+
+# 3. Install Python dependencies
+pip install -r requirements.txt
+
+# 4. Pre-warm Numba kernel
+python scripts/warmup.py
 ```
 
-This workspace also includes an existing environment at `3.13\Scripts`. Its
-exact installation command is:
+### Linux / WSL2 Setup
+```bash
+# 1. Install system Open MPI and LaTeX
+sudo apt-get update
+sudo apt-get install -y openmpi-bin libopenmpi-dev texlive-latex-base texlive-latex-extra
 
+# 2. Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# 3. Install dependencies and warm up
+pip install -r requirements.txt
+python scripts/warmup.py
+```
+
+---
+
+## 3. Quick Test (Under 30 Seconds)
+To verify your installation, coordinate orientation, and bitwise correctness:
 ```powershell
-.\3.13\Scripts\python.exe -m pip install numba
+python tests/run_correctness.py
 ```
+This runs orientation checks, partition coverage tests, reference array comparisons, and parallel identity checks. All tests must report `[PASS]`.
 
-## Run
+---
 
-The default command creates `results/fractal.png`:
+## 4. How to Run Each Version
 
+### V0: Serial Baseline
 ```powershell
-python fractal.py
+# Render all frames serially (optionally save reference hashes)
+python src/serial.py --save-reference --rep 1
 ```
 
-For the existing workspace environment, use:
-
+### V1: Shared-Memory Threads (Numba + OpenMP)
 ```powershell
-.\3.13\Scripts\python.exe fractal.py
+# Variant A: Parallel rows (p=4 threads)
+python src/threads.py --variant A -p 4 --rep 1
+
+# Variant B: Shuffled tiles (p=4 threads, tile size 20 px)
+python src/threads.py --variant B -p 4 --tile 20 --rep 1
 ```
 
-All main rendering parameters are configurable:
-
+### MPI S1: Static Rows
 ```powershell
-python fractal.py --width 800 --height 500 --max-iterations 300 `
-  --x-min -2.2 --x-max 0.8 --y-min -1.0 --y-max 1.0 `
-  --output results\custom.png
+# Run across 4 ranks (Windows MS-MPI)
+mpiexec -n 4 python src/mpi_s1_rows.py --rep 1
+
+# Optional cluster hostfile syntax (Linux/Open MPI)
+mpirun -n 4 --hostfile hosts.txt python src/mpi_s1_rows.py --rep 1
 ```
 
-The program runs a small correctness self-check before rendering. Use
-`python fractal.py --help` to see all arguments.
-
-## Correctness comparison
-
-Run the three implementations on identical inputs and require their complete
-iteration-count arrays to match:
-
+### MPI S2: Master-Worker Tiles
 ```powershell
-.\3.13\Scripts\python.exe benchmark.py --width 32 --height 18 `
-  --max-iterations 40 --threads 2 --check-only
+# Run with 1 master + 3 workers (p=4) and 20px tiles
+mpiexec -n 4 python src/mpi_s2_tiles.py --tile 20 --rep 1
 ```
 
-The command first runs the existing serial self-check, then compares the
-Python/NumPy reference, Numba serial, and Numba parallel results with exact
-array equality.
-
-## Algorithm
-
-For each complex pixel value `c`, the renderer starts at `z = 0` and repeats:
-
-```text
-z <- z² + c
-```
-
-The loop stops when `|z| > 2` or when the maximum iteration count is reached.
-The output is a NumPy array of integer iteration counts. An escaping point is
-assigned the one-based iteration on which it first exceeds 2. A point that
-does not escape receives the maximum iteration value. The escape test uses
-`z.real² + z.imag² > 4`, avoiding an unnecessary square root.
-
-Pixel mapping is explicit:
-
-* column 0 maps to `x_min`, and the last column maps to `x_max`;
-* row 0 maps to `y_max`, and the last row maps to `y_min`;
-* Matplotlib displays the array with `origin="upper"`.
-
-This makes the top of the saved image correspond to positive imaginary
-coordinates and preserves the expected vertical orientation.
-
-Computation is separated from plotting and file output in
-`render_mandelbrot` and `save_fractal_image`. The Numba kernels are in
-`fractal_kernels.py`; they contain only numerical array and scalar operations,
-with no plotting or file I/O.
-
-## Benchmark
-
-Run a small benchmark first:
-
+### MPI S3: Whole Frames per Rank
 ```powershell
-.\3.13\Scripts\python.exe benchmark.py --width 320 --height 180 `
-  --max-iterations 100 --repetitions 3 --threads 2
+# Block assignment (contiguous frame slices)
+mpiexec -n 4 python src/mpi_s3_frames.py --assignment block --rep 1
+
+# Cyclic assignment (interleaved frames, recommended for load balance)
+mpiexec -n 4 python src/mpi_s3_frames.py --assignment cyclic --rep 1
 ```
 
-For the initial-size comparison:
-
+### MPI Ping-Pong Benchmark
 ```powershell
-.\3.13\Scripts\python.exe benchmark.py --repetitions 5 --threads 2
+# Measure local shared-memory latency and bandwidth
+mpiexec -n 2 python src/pingpong.py
 ```
 
-The harness checks correctness before benchmarking. It calls both Numba
-functions once as a warm-up so JIT compilation is completed before timing
-begins. Each reported sample measures only the renderer call; coordinate
-construction is included consistently in each wrapper, while plotting and
-disk output are excluded. It reports the minimum and median of the requested
-repetitions.
+---
 
-`--threads` configures Numba's thread pool. If omitted, Numba's configured
-default is used. The output reports the actual `numba.get_num_threads()` value.
-The Numba serial version does not use parallel execution even when multiple
-threads are available.
+## 5. Benchmarking & Full Reproduction
 
-JIT compilation translates the numerical Python function into machine code on
-its first call. Warm-up prevents that one-time compilation cost from
-dominating the measured samples. A speedup is the reference runtime divided by
-an experimental runtime; parallel efficiency is speedup divided by the number
-of threads. These values should be calculated from observed benchmark output,
-not assumed in advance. Small images can be dominated by overhead, so a
-parallel result is not automatically faster.
+### Run Complete Benchmark Suite (E2–E5)
+```powershell
+python scripts/run_benchmarks.py
+```
+- Appends every result immediately to `results/` CSV files.
+- Shuffles configurations per repetition to prevent thermal bias.
+- Supports resuming: automatically skips completed configurations.
+- Execution logs are saved to `results/logs/`.
 
-## Initial configuration and expected output
+### Generate Plots, Tables, and Cost Profiles
+```powershell
+# 1. Compute iteration cost profiles (E6)
+python scripts/compute_cost_profiles.py
 
-The defaults are:
+# 2. Generate all publication figures (Figures 1 to 8)
+python scripts/make_plots.py
 
-* 640 x 360 pixels;
-* `x = [-2.2, 0.8]`;
-* `y = [-1.0, 1.0]`;
-* maximum of 200 iterations;
-* output path `results/fractal.png`.
+# 3. Generate LaTeX tables and number macros
+python scripts/make_tables.py
+```
 
-After a successful run, the `results` directory is created if needed and
-contains a PNG image of the Mandelbrot set. The benchmark has been validated
-with a small local run, but no final scaling or deployment conclusion is
-claimed yet.
+### Generate Production Movie (E10)
+```powershell
+python src/make_movie.py -p 6 --tile 20
+```
+Outputs:
+- Individual PNG frames: `output/frames/frame_000.png` $\dots$ `frame_119.png`
+- Animated GIF: `output/zoom.gif` (24 fps target; 40 ms real frame delay)
+- MP4 Video: `output/zoom.mp4` (H.264, 24 fps, exact $640 \times 360$ resolution)
 
-## Troubleshooting
+### Compile the LaTeX Report
+```powershell
+cd report
+pdflatex -interaction=nonstopmode main.tex
+pdflatex -interaction=nonstopmode main.tex
+cd ..
+```
+Produces `report/main.pdf`.
 
-* **`ModuleNotFoundError` for NumPy, Matplotlib, or Numba:** activate the
-  environment and run `python -m pip install numpy matplotlib numba`.
-* **PowerShell blocks activation:** run the script with the environment's
-  Python executable directly, for example
-  `.\3.13\Scripts\python.exe fractal.py`.
-* **Invalid dimensions or iteration limit:** width, height, and
-  `--max-iterations` must be positive integers.
-* **Invalid coordinate bounds:** each minimum must be strictly less than its
-  corresponding maximum.
-* **No display is available:** this program selects Matplotlib's non-interactive
-  `Agg` backend and writes the image without opening a window.
-* **Invalid thread count:** `--threads` must be a positive integer accepted by
-  Numba. Try omitting it to use Numba's default, or choose a supported count.
+---
+
+## 6. Implementation Status Matrix
+
+| Version | Target Architecture | Implementation Model | Status |
+| :--- | :--- | :--- | :--- |
+| **V0** | Local Host | Serial Python + Numba `@njit` | **EXECUTED** |
+| **V1** | Local Host | Threads (Numba `prange` + OpenMP) | **EXECUTED** |
+| **MPI Local** | Local Host | Distributed ranks (MS-MPI, S1, S2, S3) | **EXECUTED** |
+| **V2** | Bridged VMs | MPI over virtual network | *DEFERRED* |
+| **V3** | Docker Containers | MPI over container network / macvlan | *DEFERRED* |
+| **V4** | Physical LAN | MPI over lab Ethernet switch | *DEFERRED* |
+
+> **Note on Next Phase:** Virtual Machine (V2), Docker container (V3), and physical LAN (V4) deployments are intentionally deferred to the subsequent project phase. The existing codebase is fully prepared for multi-node execution via the `--hostfile` argument in `src/mpi_*.py` and `scripts/mpi_launch.py`.
+
+---
+
+## 7. Troubleshooting & Lessons Learned (from `dev_log.md`)
+1. **`mpiexec` not recognized in Windows PowerShell:**  
+   Microsoft MPI installer places binaries in `C:\Program Files\Microsoft MPI\Bin`, which may not be in user PATH. `scripts/mpi_launch.py` and `scripts/env_info.py` auto-detect and append this path dynamically.
+2. **S2 Dynamic Work Queue Tag Collision:**  
+   Master polling with `MPI.ANY_TAG` caused premature receipt of worker termination dictionaries (`tag=100`), causing a ValueError. Resolved by matching work returns explicitly with `tag=TAG_WORK`.
+3. **Numba `set_num_threads` bounds:**  
+   Setting `NUMBA_NUM_THREADS=1` prior to importing Numba restricts the maximum thread pool capacity. Thread limits must only be constrained for single-threaded MPI workers.

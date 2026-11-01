@@ -1,0 +1,18 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{MPI S3 frame distribution comparison: Block vs. Cyclic partitioning. (Source: \texttt{results/mpi\_scaling.csv})}
+\label{tab:s3_comparison}
+\begin{tabular}{c|ccc|ccc}
+\toprule
+& \multicolumn{3}{c|}{\textbf{Block Assignment}} & \multicolumn{3}{c}{\textbf{Cyclic Assignment}} \\
+$p$ & $T_{render}$ (s) & Speedup & Imbalance & $T_{render}$ (s) & Speedup & Imbalance \\
+\midrule
+1 & 40.57 & 1.00$\times$ & 1.00 & 40.55 & 1.00$\times$ & 1.00 \\
+2 & 20.91 & 1.93$\times$ & 1.03 & 20.41 & 1.98$\times$ & 1.00 \\
+4 & 14.05 & 2.88$\times$ & 1.37 & 10.35 & 3.90$\times$ & 1.00 \\
+8 & 7.58 & 5.33$\times$ & 1.42 & 5.51 & 7.33$\times$ & 1.01 \\
+12 & 5.36 & 7.54$\times$ & 1.43 & 3.96 & 10.20$\times$ & 1.03 \\
+\bottomrule
+\end{tabular}
+\end{table}

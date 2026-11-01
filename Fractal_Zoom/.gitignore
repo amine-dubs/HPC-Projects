@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.npy
+*.npz
+
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Output frames and temporary figures
+output/frames/
+*.png.tmp
+
+# LaTeX auxiliary files
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.synctex.gz
+report/*.fls
+report/*.fdb_latexmk
+report/generated/*.aux
+

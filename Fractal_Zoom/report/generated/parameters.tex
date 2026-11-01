@@ -1,0 +1,23 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Fractal zoom computation and benchmarking parameters. (Source: \texttt{config.json})}
+\label{tab:parameters}
+\begin{tabular}{lll}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+\midrule
+Frame Resolution & 640 $\times$ 360 & 16:9 widescreen video resolution \\
+Total Frames & 120 & Frame sequence count (approx 5.0~s at 24~fps) \\
+Zoom Centre ($c$) & -0.7436 + 0.1318i & Fixed coordinates in Seahorse Valley \\
+Window Width ($W_0$) & 3.0 & Initial real-axis window dimension \\
+Shrink Factor & 0.95 per frame & Exponential magnification: $W_k = W_0 \cdot 0.95^k$ \\
+Iteration Limit & 200 $\rightarrow$ 1000 & Linear increase: $200 + 800 \cdot k / 119$ \\
+Escape Criterion & $|z|^2 \le 4.0$ & Standard Euclidean boundary radius ($R=2.0$) \\
+Tile Sizes ($S_2, V_1\text{-B}$) & 10, 20, 40, 80 pixels & Square decomposing blocks with edge clipping \\
+Process Counts ($p$) & 1, 2, 4, 8, 12 & Single core, multicore, and oversubscribed \\
+Repetitions & 3 (5 for V0) & Median and min--max reported \\
+Shuffle Seed ($V_1\text{-B}$) & 42 & Deterministic PRNG seed for tile mixing \\
+\bottomrule
+\end{tabular}
+\end{table}
