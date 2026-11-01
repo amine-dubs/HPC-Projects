@@ -14,3 +14,4 @@ All figures are automatically generated from raw benchmark CSV/JSON files by `sc
 | `fig7_pingpong.png` | **Figure 8** (Appendix E) | Local MPI shared-memory Ping-Pong one-way latency and bandwidth curves | `results/pingpong.csv` |
 
 *Note on Numbering:* Per Section 7 of `instructions.md`, primary figures (1, 2, 3, 4, and the filmstrip) are placed in the report body, while supplementary analyses (S3 block vs cyclic, iteration correlation, ping-pong) are placed in Appendices C, D, and E. LaTeX automatically numbers figures sequentially by order of appearance.
+

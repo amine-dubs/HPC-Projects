@@ -38,7 +38,8 @@ Fractal_Zoom/
 │   ├── compute_cost_profiles.py # E6 iteration cost analysis
 │   ├── run_benchmarks.py   # Benchmark execution harness
 │   ├── make_plots.py       # Publication-ready figure generator
-│   └── make_tables.py      # LaTeX table and macro generator
+│   ├── make_tables.py      # LaTeX table and macro generator
+│   └── audit_numbers.py    # Rule 1 number-traceability audit for the report
 ├── results/                # Raw benchmark CSVs, logs, and reference arrays
 ├── figures/                # Rendered PNG/PDF figures
 ├── output/                 # Final zoom frames, zoom.gif, and zoom.mp4
@@ -91,12 +92,12 @@ python scripts/warmup.py
 
 ---
 
-## 3. Quick Test (Under 30 Seconds)
+## 3. Quick Test (Approximately 2 Minutes)
 To verify your installation, coordinate orientation, and bitwise correctness:
 ```powershell
 python tests/run_correctness.py
 ```
-This runs orientation checks, partition coverage tests, reference array comparisons, and parallel identity checks. All tests must report `[PASS]`.
+This runs orientation checks, partition coverage tests, reference array comparisons, parallel identity checks, and live MPI subprocess executions (S1, S2, S3) that render full 120-frame workloads. All tests must report `[PASS]`.
 
 ---
 
@@ -171,6 +172,7 @@ python scripts/make_plots.py
 # 3. Generate LaTeX tables and number macros
 python scripts/make_tables.py
 ```
+The mapping from each PNG file in `figures/` to its Figure number and section in `report/main.pdf` is documented in `figures/README.md`.
 
 ### Generate Production Movie (E10)
 ```powershell

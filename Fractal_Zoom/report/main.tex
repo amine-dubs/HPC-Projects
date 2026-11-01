@@ -21,6 +21,8 @@
 \setlength{\floatsep}{6pt plus 2pt minus 2pt}
 \setlength{\intextsep}{6pt plus 2pt minus 2pt}
 \setlength{\parskip}{1.5pt plus 1pt minus 1pt}
+% Extra stretch for difficult lines, keeps overfull hboxes away without large gaps
+\setlength{\emergencystretch}{3em}
 \setlist{noitemsep, topsep=1.5pt, parsep=0pt, partopsep=0pt}
 \captionsetup{skip=2.5pt}
 
@@ -85,7 +87,7 @@ The objective of this project is to implement, evaluate, and compare parallel ex
 \label{sec:implementation}
 
 \subsection{Shared Computational Kernel and Geometry}
-All parallel and serial versions share a single computational kernel implemented in \texttt{src/fractal\_core.py}. Strict determinism is enforced across all versions by disabling \texttt{fastmath}. 
+All parallel and serial versions share a single computational kernel, implemented in \texttt{fractal\_core.py} (in \texttt{src/}). Strict determinism is enforced across all versions by disabling \texttt{fastmath}. 
 
 To prevent floating-point discrepancies across subgrid boundaries, pixel coordinates are computed strictly from global frame indices $(i, j)$ rather than local tile offsets. Per-frame parameters $(x_{min}, y_{max}, dx, dy, M_k)$ are derived once per frame $k$:
 \begin{equation}
@@ -159,7 +161,7 @@ We measure rendering performance using the following standardized metrics:
     \item \textbf{Speedup ($S$):} $S = T_{serial} / T_p$.
     \item \textbf{Parallel Efficiency ($E$):} $E = S / p$. For S2, worker efficiency is also evaluated as $E_{workers} = S / (p - 1)$.
     \item \textbf{Frames per Second ($\text{FPS}$):} $\text{FPS} = \totalFramesCount / T_p$.
-    \item \textbf{Load Imbalance Ratio ($\lambda$):} Evaluated from per-rank busy times as $\lambda = \max(t_{compute}) / \text{mean}(t_{compute})$.
+    \item \textbf{Load Imbalance Ratio ($\lambda$):} Evaluated from per-rank busy times as $\lambda = \max(t_{compute})$ / $\text{mean}(t_{compute})$.
 \end{itemize}
 
 % =========================================================================
@@ -172,12 +174,12 @@ We measure rendering performance using the following standardized metrics:
 The test suite in \texttt{tests/run\_correctness.py} checks coordinate orientation, row-block and tile partition coverage, full-frame reference validation against serial arrays, and algorithmic identity across all versions. All unit tests and parallel configurations (including live multi-process MPI executions) achieved 100\% bitwise identity against V0 with zero pixel discrepancies (detailed validation rows are documented in Table~\ref{tab:correctness}, Appendix~\ref{app:correctness}).
 
 \subsection{Scaling and Threading Comparison}
-Figure~\ref{fig:scaling} illustrates speedup and parallel efficiency as a function of process/thread count $p \in \{1, 2, 4, 8, 12\}$. Detailed numerical values across all configurations are documented in Table~\ref{tab:scaling_summary} (Appendix~\ref{app:scaling}).
+Figure~\ref{fig:scaling} illustrates speedup, parallel efficiency, and render throughput as a function of process/thread count $p \in \{1, 2, 4, 8, 12\}$, with min--max ranges over repetitions. Detailed numerical values across all configurations are documented in Table~\ref{tab:scaling_summary} (Appendix~\ref{app:scaling}).
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[height=3.8cm]{fig1_scaling.png}
-\caption{Parallel speedup (left) and parallel efficiency (right) vs. core count $p$. Physical core limit is 6 cores. Source: \texttt{results/mpi\_scaling.csv}, \texttt{results/threads.csv}.}
+\includegraphics[height=3.6cm]{fig1_scaling.png}
+\caption{Parallel speedup (left), parallel efficiency (middle), and render throughput (right) vs. process/thread count $p$, min--max error bars over repetitions; shaded $p > 6$ is oversubscribed on the 6-core host. Source: \texttt{results/mpi\_scaling.csv}, \texttt{results/threads.csv}.}
 \label{fig:scaling}
 \end{figure}
 
@@ -197,7 +199,7 @@ Among the distributed memory strategies, performance is dictated by load balance
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[height=3.4cm]{fig2_busy_time.png}
+\includegraphics[height=3.2cm]{fig2_busy_time.png}
 \caption{Per-rank busy time decomposition (compute vs. wait/comm) at $p=4$. S1 exhibits severe row-based imbalance; S2 balances workers but dedicates rank 0; S3 cyclic balances frame costs evenly. Source: \texttt{results/busy\_time.csv}.}
 \label{fig:busy_time}
 \end{figure}
@@ -207,12 +209,12 @@ Figure~\ref{fig:tile_size} and Table~\ref{tab:tile_size} evaluate the tile size 
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[height=3.2cm]{fig3_tile_size.png}
+\includegraphics[height=3.0cm]{fig3_tile_size.png}
 \caption{S2 Master-Worker tile size trade-off ($p=4$). Small tiles balance work but increase message traffic to the master. Source: \texttt{results/tile\_size.csv}.}
 \label{fig:tile_size}
 \end{figure}
 
-Small tiles ($10 \times 10$) provide fine load granularity but flood the master with \sTwoTileTenMessages~messages, creating a communication bottleneck ($T_p = \sTwoTileTenTime$~s). Because our unified task queue spans all \totalFramesCount~frames without inter-frame barriers, $80 \times 80$ tiles provide 4800 total tasks—sufficient to balance 3 workers without tail latency—while slashing message traffic to \sTwoTileEightyMessages~messages, achieving the fastest rendering time ($T_p = \sTwoOptimalTileTime$~s).
+Small tiles ($10 \times 10$) provide fine load granularity but flood the master with \sTwoTileTenMessages~messages, creating a communication bottleneck ($T_p = \sTwoTileTenTime$~s). Because our unified task queue spans all \totalFramesCount~frames without inter-frame barriers, $80 \times 80$ tiles provide 4800 total tasks, enough to balance 3 workers without tail latency, while cutting message traffic to \sTwoTileEightyMessages~messages and achieving the fastest rendering time ($T_p = \sTwoOptimalTileTime$~s).
 
 \input{generated/tile_size_summary.tex}
 
@@ -228,7 +230,7 @@ Figure~\ref{fig:cost_map} displays the spatial distribution of iterations per ti
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[height=3.4cm]{fig4_cost_map.png}
+\includegraphics[height=3.2cm]{fig4_cost_map.png}
 \caption{Spatial iteration density across zoom depths (top, log scale) and row block iteration shares for S1 ($p=4$, bottom). Source: \texttt{results/cost\_per\_tile.npz}, \texttt{results/cost\_per\_rowblock.csv}.}
 \label{fig:cost_map}
 \end{figure}
@@ -247,7 +249,7 @@ For production artifact generation (Experiment E10), all $\totalFramesCount$ fra
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.50\linewidth]{fig8_filmstrip.png}
+\includegraphics[width=0.45\linewidth]{fig8_filmstrip.png}
 \caption{Filmstrip of the 120-frame Mandelbrot zoom toward $c = \zoomCenterX + \zoomCenterY i$ rendered at $\frameWidth \times \frameHeight$. Source: \texttt{output/frames/}.}
 \label{fig:filmstrip}
 \end{figure}
