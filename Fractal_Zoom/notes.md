@@ -248,7 +248,7 @@
 ## 12. Numbers Cheat-Sheet (Key Metrics to Memorize)
 
 - **V0 Serial Baseline Time:** $40.41$~seconds ($2.97$~FPS) (`results/serial_times.csv`).
-- **Best Threads Speedup (V1-B):** $8.37\times$ at $p = 12$ ($T_p = 4.83$~s vs. $5.42$~s for Variant A) (`results/threads.csv`).
+- **Best Threads Speedup (V1-B):** $8.37\times$ at $p = 12$ ($T_p = 4.83$~s vs. $5.39$~s for Variant A) (`results/threads.csv`).
 - **Best MPI Strategy:** S3 Cyclic (`results/mpi_scaling.csv`).
 - **Best MPI Speedup:** $10.20\times$ at $p = 12$ ($T_p = 3.96$~s, $30.30$~FPS) (`results/mpi_scaling.csv`).
 - **S3 Block vs Cyclic Imbalance:** Block $\lambda \approx 1.48$ vs. Cyclic $\lambda \approx 1.01$ (`results/busy_time.csv`).
@@ -256,7 +256,7 @@
 - **S2 Master Worker Imbalance:** Workers achieve near-perfect balance ($\lambda \approx 1.03$), but $p=2$ has only 1 compute worker ($T_p \approx 44.4$~s) (`results/busy_time.csv`).
 - **Ping-Pong Shared-Memory Latency:** $2.24~\mu$s minimal one-way latency (`results/pingpong.csv`).
 - **Ping-Pong Peak Bandwidth:** $3882.47$~MB/s ($\approx 3.88$~GB/s) for 8 MiB buffers (`results/pingpong.csv`).
-- **Video Production Timings (E10):** Render time $7.70$~s, I/O + video encoding $10.62$~s, total production $18.32$~s (`results/production.csv`).
+- **Video Production Timings (E10):** Render time $8.11$~s, I/O + video encoding $11.41$~s, total production $19.52$~s (`results/production.csv`; every frame hash-verified against the serial reference).
 - **Hardware Architecture:** AMD Ryzen 5 5500U, 6 physical cores, 12 logical threads, 15.54 GB RAM (`results/environment.json`).
 
 ---

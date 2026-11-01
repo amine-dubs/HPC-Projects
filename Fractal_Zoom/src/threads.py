@@ -35,12 +35,27 @@ from fractal_core import (
 
 @njit(parallel=True)
 def render_frame_rows(H, W, xmin, ymax, dx, dy, maxit):
-    """Variant A: parallel over image rows using prange."""
+    """Variant A: parallel over image rows using prange.
+
+    F-08: pixels are computed and written directly into the preallocated
+    output array instead of calling render_block per row (which allocated a
+    fresh 1-row array on every loop iteration, 120 x 360 = 43,200 times per
+    run). The escape loop mirrors fractal_core.render_block exactly (same
+    <= 4.0 bound, same float operation order) so the output stays bitwise
+    identical to the serial V0 reference.
+    """
     out = np.empty((H, W), dtype=np.int32)
     for j in prange(H):
-        row = render_block(j, j + 1, 0, W, xmin, ymax, dx, dy, maxit)
+        ci = ymax - j * dy
         for i in range(W):
-            out[j, i] = row[0, i]
+            cr = xmin + i * dx
+            zr = 0.0
+            zi = 0.0
+            k = 0
+            while k < maxit and (zr * zr + zi * zi) <= 4.0:
+                zr, zi = zr * zr - zi * zi + cr, 2.0 * zr * zi + ci
+                k += 1
+            out[j, i] = k
     return out
 
 

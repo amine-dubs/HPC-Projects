@@ -23,7 +23,13 @@ from mpi_launch import build_mpi_cmd
 
 
 def count_existing_reps(csv_file, match_dict):
-    """Count how many times a configuration matching match_dict appears in csv_file."""
+    """Count how many times a configuration matching match_dict appears in csv_file.
+
+    Numeric-tolerant comparison: CSV historical rows sometimes store tile as
+    '20.0' while the harness matches '20'. Both sides are compared as floats
+    when both parse numerically, so resume logic does not duplicate completed
+    configurations.
+    """
     if not Path(csv_file).is_file():
         return 0
     count = 0
@@ -32,9 +38,19 @@ def count_existing_reps(csv_file, match_dict):
         for row in reader:
             matches = True
             for k, v in match_dict.items():
-                if str(row.get(k, "")) != str(v):
+                rv = str(row.get(k, ""))
+                sv = str(v)
+                if rv == sv:
+                    continue
+                try:
+                    # Numeric equivalence (e.g. '20.0' == '20')
+                    if float(rv) != float(sv):
+                        matches = False
+                        break
+                except ValueError:
                     matches = False
                     break
+
             if matches:
                 count += 1
     return count

@@ -176,7 +176,11 @@ The mapping from each PNG file in `figures/` to its Figure number and section in
 
 ### Generate Production Movie (E10)
 ```powershell
+# Default: Threads V1-B engine (recommended on a single workstation)
 python src/make_movie.py -p 6 --tile 20
+
+# Alternative: MPI S3-cyclic engine (launch under mpiexec; rank 0 writes all output)
+mpiexec -n 12 python src/make_movie.py --engine mpi
 ```
 Outputs:
 - Individual PNG frames: `output/frames/frame_000.png` $\dots$ `frame_119.png`

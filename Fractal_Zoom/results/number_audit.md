@@ -61,8 +61,8 @@ The following metrics are dynamically loaded from `report/generated/numbers.tex`
 - `\newcommand{\serialMedianTime}{40.41}`
 - `\newcommand{\serialFps}{2.97}`
 - `\newcommand{\threadsVariantABestP}{12}`
-- `\newcommand{\threadsVariantABestTime}{5.42}`
-- `\newcommand{\threadsVariantABestSpeedup}{7.46}`
+- `\newcommand{\threadsVariantABestTime}{5.39}`
+- `\newcommand{\threadsVariantABestSpeedup}{7.50}`
 - `\newcommand{\threadsVariantBBestP}{12}`
 - `\newcommand{\threadsVariantBBestTime}{4.83}`
 - `\newcommand{\threadsVariantBBestSpeedup}{8.37}`
@@ -86,6 +86,6 @@ The following metrics are dynamically loaded from `report/generated/numbers.tex`
 - `\newcommand{\pingpongMinLatencyMicrosec}{2.24}`
 - `\newcommand{\pingpongMaxBandwidthMbps}{3882.47}`
 - `\newcommand{\pingpongMaxBandwidthGbps}{3.88}`
-- `\newcommand{\productionRenderTime}{7.70}`
-- `\newcommand{\productionIoTime}{10.62}`
-- `\newcommand{\productionTotalTime}{18.32}`
+- `\newcommand{\productionRenderTime}{8.11}`
+- `\newcommand{\productionIoTime}{11.41}`
+- `\newcommand{\productionTotalTime}{19.52}`
